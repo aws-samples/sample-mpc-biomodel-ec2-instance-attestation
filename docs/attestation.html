@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptographic Attestation & KMS Sealing</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        :root {
+            --primary-color: #0972d3;
+            --secondary-color: #414d5c;
+            --background: #fafafa;
+            --card-bg: #ffffff;
+            --text-color: #16191f;
+            --border-color: #e9ebed;
+            --success-color: #037f0c;
+            --warning-color: #8a6500;
+            --danger-color: #d13212;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Amazon Ember', 'Helvetica Neue', Roboto, Arial, sans-serif;
+            background: var(--background);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .nav {
+            background: var(--secondary-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .nav a:hover, .nav a.active { background: rgba(255,255,255,0.1); }
+        
+        .hero {
+            background: linear-gradient(135deg, #d13212 0%, #232f3e 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+        
+        .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .hero p { font-size: 1.2rem; opacity: 0.9; max-width: 800px; margin: 0 auto; }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .card h3 { color: var(--secondary-color); margin: 1.5rem 0 0.75rem; }
+        
+        .mermaid {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        
+        code {
+            background: #f1f3f5;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+        }
+        
+        pre {
+            background: #232f3e;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        pre code { background: transparent; padding: 0; }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+        
+        .alert-info {
+            background: #e3f2fd;
+            border-color: #1976d2;
+            color: #0d47a1;
+        }
+        
+        .alert-warning {
+            background: #fff3e0;
+            border-color: #f57c00;
+            color: #e65100;
+        }
+        
+        .alert-success {
+            background: #e8f5e9;
+            border-color: #43a047;
+            color: #1b5e20;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th { background: #f8f9fa; font-weight: 600; }
+        
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .two-col { grid-template-columns: 1fr; }
+        }
+        
+        .step {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .step-num {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .footer {
+            background: var(--secondary-color);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+        
+        .footer a { color: #7dd6ff; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <ul>
+            <li><a href="index.html">Overview</a></li>
+            <li><a href="attestation.html" class="active">Attestation</a></li>
+            <li><a href="developer-guide.html">Developer Guide</a></li>
+            <li><a href="packaging.html">Packaging</a></li>
+        </ul>
+    </nav>
+    
+    <header class="hero">
+        <h1>🔐 Cryptographic Attestation & KMS Sealing</h1>
+        <p>Hardware-based proof of execution environment with AWS KMS integration for secure key management</p>
+    </header>
+    
+    <main class="container">
+        <section class="card">
+            <h2>What is Attestation?</h2>
+            <p>Attestation is the process of generating cryptographic evidence that proves the current state of a computing environment. With AWS NitroTPM, we can generate attestation documents signed by AWS that prove:</p>
+            
+            <ul style="margin: 1rem 0 1rem 2rem;">
+                <li><strong>Platform Identity</strong>: The code is running on genuine AWS Nitro hardware</li>
+                <li><strong>Boot Integrity</strong>: The system booted with expected firmware and kernel</li>
+                <li><strong>Application State</strong>: Specific application code and data are loaded</li>
+                <li><strong>Model Authenticity</strong>: ML model weights have not been modified</li>
+            </ul>
+            
+            <div class="mermaid">
+flowchart LR
+    subgraph "Attestation Components"
+        TPM[NitroTPM]
+        PCR[PCR Values]
+        AK[Attestation Key]
+        CERT[Certificate Chain]
+    end
+    
+    subgraph "Attestation Document"
+        DOC[Signed Document]
+        DOC --> |contains| PCR
+        DOC --> |signed by| AK
+        AK --> |certified by| CERT
+        CERT --> |roots to| AWS[AWS Root CA]
+    end
+    
+    TPM --> DOC
+    
+    style AWS fill:#ff9900,color:#000
+    style DOC fill:#0972d3,color:#fff
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Trust Chain</h2>
+            <p>The attestation document establishes a chain of trust from the AWS Nitro root down to the loaded application and model:</p>
+
+            <div class="mermaid">
+flowchart TB
+    A[AWS Nitro Root Certificate] --> B[Intermediate CA]
+    B --> C[TPM Attestation Key Certificate]
+    C --> D[Attestation Document]
+    D --> E[PCR Values]
+    E --> F[Platform Integrity]
+    E --> G[Application Integrity]
+    E --> H[Model Integrity]
+
+    style A fill:#ff9900,color:#000
+    style D fill:#0972d3,color:#fff
+    style H fill:#037f0c,color:#fff
+            </div>
+
+            <p>Each link is verified before the measurements it carries are trusted. The attestation document is signed with a key whose certificate chains through an intermediate certificate authority to the AWS Nitro root certificate, so a verifier can confirm the document was produced by genuine Nitro hardware and was not forged by the party that operates the instance. Once the chain is validated, the PCR values inside the document are trusted to describe the three properties the collaboration depends on: platform integrity (firmware, boot manager, and secure-boot state), application integrity (the code that was booted), and model integrity (the Boltz weights measured into PCR16). The browser verifies these values when establishing its trusted baseline, and AWS KMS verifies them again on the key policy before it unseals a secret.</p>
+        </section>
+
+        <section class="card">
+            <h2>PCR Measurements for Sealing</h2>
+            <p>When sealing data to specific PCR values, we use PCRs 4, 7, 12, and 16 which together establish platform and application integrity:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>PCR</th>
+                        <th>Measurement</th>
+                        <th>Security Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>PCR4</code></td>
+                        <td>Boot Manager Code</td>
+                        <td>Ensures the bootloader has not been modified (GRUB, systemd-boot)</td>
+                    </tr>
+                    <tr>
+                        <td><code>PCR7</code></td>
+                        <td>Secure Boot State</td>
+                        <td>Verifies Secure Boot policy is enforced and certificates are valid</td>
+                    </tr>
+                    <tr>
+                        <td><code>PCR12</code></td>
+                        <td>Kernel Command Line</td>
+                        <td>Ensures kernel parameters have not been tampered with</td>
+                    </tr>
+                    <tr>
+                        <td><code>PCR16</code></td>
+                        <td>Application Data (Boltz Model Hash)</td>
+                        <td>Proves the ML model weights are authentic and unmodified</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>The platform and boot measurements in PCR4, 7, and 12 are fixed at launch and do not change while the instance runs. PCR16 is different: it starts at zero and changes only when the application measures a model into it at startup, so it changes if and only if a different set of weights is loaded and re-measured.</p>
+
+            <p>The two keys therefore bind different subsets. The <strong>model key</strong> binds only the platform and boot measurements (PCR4, 7, and 12): the weights are what get measured into PCR16, so at the moment they are decrypted the model is not yet loaded and PCR16 does not describe it, which makes binding the model key to PCR16 circular. Gating the model key on platform integrity releases the weights only onto a known-good instance. The <strong>sequence key</strong> binds PCR4, 7, 12, and 16: sequence decryption happens after the model is loaded, so PCR16 is meaningful and commits the sequence to the specific model that will fold it.</p>
+
+            <div class="mermaid">
+flowchart TB
+    subgraph Boot["Boot Process"]
+        BIOS[UEFI Firmware] --> |measures| BM[Boot Manager]
+        BM --> |measures| SB[Secure Boot Policy]
+        SB --> |measures| KERNEL[Kernel + initramfs]
+        KERNEL --> |measures| CMDLINE[Kernel Command Line]
+    end
+    
+    subgraph App["Application Startup"]
+        APP[Application] --> |computes| HASH[Model Hash SHA-384]
+        HASH --> |extends| PCR16[PCR16]
+    end
+    
+    BM --> PCR4[PCR4]
+    SB --> PCR7[PCR7]
+    CMDLINE --> PCR12[PCR12]
+    
+    subgraph Sealing["Conditional Key Policy (PCR-scoped)"]
+        PCR4 & PCR7 & PCR12 & PCR16 --> POLICY[KMS Key Policy]
+    end
+    
+    style PCR16 fill:#037f0c,color:#fff
+    style POLICY fill:#ff9900,color:#000
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>AWS KMS Integration</h2>
+            <p>AWS KMS supports condition keys that require specific NitroTPM attestation properties, so a key's use can be conditioned on specific PCR values (e.g. the model weights owner requires that weights only decrypt inside an instance presenting the expected measurements).</p>
+
+            <h3>Enforcement: explicit Deny, not just Allow</h3>
+            <p>An <strong>Allow</strong> alone does not <em>guarantee</em> attestation. Some other policy statement or grant could still permit <code>kms:Decrypt</code>. The strong control is an <strong>explicit Deny</strong>: in IAM/KMS policy evaluation, an explicit Deny overrides every Allow. This project therefore writes <em>both</em>:</p>
+            <ul>
+                <li>an <strong>Allow</strong> that permits <code>kms:Decrypt</code> when the NitroTPM PCRs match, and</li>
+                <li>one explicit <strong>Deny</strong> per PCR that blocks <code>kms:Decrypt</code> whenever that PCR is <em>missing</em> or <em>different</em>.</li>
+            </ul>
+            <p>As a result, the data can be decrypted <em>only</em> inside an instance presenting the exact expected measurements. This is the theft-protection guarantee for the model weights (and for sealed input sequences).</p>
+
+            <h3>KMS Key Policy with PCR Conditions (Allow + explicit Deny)</h3>
+            <p>The example below is for the <strong>model key</strong> (biophysicist), which binds
+            PCR4/7/12 only, never PCR16. The weights are what get measured <em>into</em> PCR16,
+            so at model-decrypt time the model is not yet loaded and PCR16 does not reflect it; binding
+            the model key to PCR16 would be circular. The <strong>sequence key</strong> (biologist) adds
+            PCR16, because sequences decrypt only after the approved model is loaded.</p>
+            <pre><code>{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowDecryptWithBiophysicistAttestation",
+            "Effect": "Allow",
+            "Principal": { "AWS": "arn:aws:iam::123456789012:role/BoltzEC2Role" },
+            "Action": "kms:Decrypt",
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "kms:RecipientAttestation:NitroTPMPCR4":  "YOUR_PCR4_VALUE_HEX",
+                    "kms:RecipientAttestation:NitroTPMPCR7":  "YOUR_PCR7_VALUE_HEX",
+                    "kms:RecipientAttestation:NitroTPMPCR12": "YOUR_PCR12_VALUE_HEX"
+                }
+            }
+        },
+        {
+            "Sid": "AllowDecryptWithBiophysicistAttestationDenyUnlessNitroTPMPCR4",
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "kms:Decrypt",
+            "Resource": "*",
+            "Condition": {
+                "StringNotEquals": { "kms:RecipientAttestation:NitroTPMPCR4": "YOUR_PCR4_VALUE_HEX" }
+            }
+        }
+        /* ...one such Deny per PCR (4, 7, 12) for the model key;
+           the sequence key adds a fourth Deny on PCR16... */
+    ]
+}</code></pre>
+
+            <div class="alert alert-info">
+                <strong>Why one Deny per PCR, and no <code>Null</code> guard:</strong> a single
+                multi-key <code>StringNotEquals</code> denies only when <em>every</em> key
+                mismatches, so the policy emits one Deny per PCR to deny if <em>any</em> required PCR is
+                wrong. Each Deny is <code>StringNotEquals</code> with <em>no</em> <code>Null</code> guard:
+                because <code>StringNotEquals</code> is a negated operator, IAM treats a <em>missing</em>
+                key as a match, so the Deny fires both when the PCR is absent (an unattested
+                <code>kms:Decrypt</code> that carries no Recipient) and when it is present but different.
+                An earlier design added <code>Null: {"...": "false"}</code> to scope the Deny to requests
+                that already carry the key. That was a security bug: a plain unattested
+                <code>kms:Decrypt</code> then fell through to the Allow, and the weights (or sequences)
+                could be unsealed with no attestation at all. The Deny is scoped to
+                <code>Action: kms:Decrypt</code>, so key administration and the encrypt side are
+                unaffected without needing a <code>Null</code> carve-out. PCR values are exact SHA-384
+                hex (96 chars).
+            </div>
+
+            <div class="alert alert-info">
+                <strong>Where the principal ARN comes from:</strong> the Allow's principal is not a
+                hand-typed value. It is the attested instance role ARN, taken from the <em>signed</em>
+                <code>user_data</code> in the attestation document, so it cannot be widened or mistyped
+                by accident. The EC2 instance role carries <strong>no standing IAM <code>kms:Decrypt</code>
+                grant</strong>. This key-policy Allow (scoped to that ARN and conditioned on the
+                PCRs) is the <em>only</em> path to decryption, so unsealing requires both the exact
+                principal and a matching attestation.
+            </div>
+
+            <div class="alert alert-info">
+                <strong>Key separation:</strong> the model CMK (<code>alias/boltz-model-key</code>)
+                is used <em>only</em> for the attestation-gated envelope encryption of the weights.
+                The models S3 bucket uses <strong>SSE-S3</strong> (the S3-managed key) for at-rest
+                encryption (not this CMK), so the explicit Deny on the CMK never interferes with
+                S3 reading the (already envelope-encrypted) objects.
+            </div>
+
+            <div class="alert alert-warning">
+                <strong>Licensing and entitlements:</strong> scoping the key policy to the instance
+                role ARN binds decryption to a principal, but it does not count how many instances are
+                running the sealed Boltz model. Licensing and entitlements would require additional
+                tracking of the number of instances running the sealed model, so adding the instance
+                profile ARN directly to the key policy may not be the operationally efficient way to do
+                this &mdash; a dedicated entitlement/metering service would track running instances
+                instead.
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>Sealing Flow with AWS KMS</h2>
+            
+            <div class="mermaid">
+sequenceDiagram
+    participant App as Boltz Application
+    participant TPM as NitroTPM
+    participant KMS as AWS KMS
+    participant Client as Client Application
+    
+    Note over App: Application Startup
+    App->>App: Compute model hash (SHA-384)
+    App->>TPM: Extend PCR16 with model hash
+    TPM-->>App: PCR16 updated
+    
+    Note over Client,KMS: Encryption (One-time Setup)
+    Client->>KMS: Encrypt sensitive data
+    Client->>KMS: Store with PCR condition policy
+    KMS-->>Client: Encrypted blob
+    
+    Note over App,KMS: Decryption (Runtime)
+    App->>TPM: Generate attestation document
+    TPM-->>App: Signed attestation
+    App->>App: Generate ephemeral RSA key pair
+    App->>KMS: Decrypt request + attestation (public key embedded)
+    KMS->>KMS: Verify PCR4, 7, 12, 16
+    alt PCRs Match
+        KMS-->>App: CiphertextForRecipient (plaintext wrapped to public key)
+        App->>App: Unwrap with private key, use sensitive data
+    else PCRs Mismatch
+        KMS-->>App: Access Denied
+    end
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>Computing PCR Values</h2>
+            
+            <h3>Reading Current PCR Values</h3>
+            <pre><code># Read SHA-384 PCR values (used by NitroTPM attestation)
+tpm2_pcrread sha384:4,7,12,16
+
+# Output:
+#   sha384:
+#     4: 0x... (96 hex chars)
+#     7: 0x... (96 hex chars)
+#    12: 0x... (96 hex chars)
+#    16: 0x... (96 hex chars)</code></pre>
+            
+            <h3>PCR Extension Formula</h3>
+            <p>When a PCR is extended, the new value is computed as:</p>
+            <pre><code>PCR_new = SHA-384(PCR_old || data_to_extend)</code></pre>
+
+            <p>Extension is one-way: the new register value is the SHA-384 hash of the current value concatenated with the new measurement, so a PCR can only be appended to and never set to an arbitrary value. Its final value is a tamper-evident summary of everything measured into it, in order. If the boot chain or the model on disk changes, the corresponding PCR no longer matches, and the KMS key policy bound to it stops releasing the secret.</p>
+
+            <p>For PCR16, starting from all zeros:</p>
+            <pre><code># Initial PCR16 value (all zeros, 48 bytes = 96 hex chars)
+PCR16_initial = 0x000...000
+
+# After extension with model hash:
+PCR16_final = SHA-384(PCR16_initial || model_hash)
+
+# Example:
+# model_hash = "abc123..."  (96 hex chars, SHA-384 of model files)
+# PCR16_final = SHA-384(zeros || model_hash)</code></pre>
+            
+            <div class="alert alert-warning">
+                <strong>Important:</strong> PCR values are cumulative. If you extend PCR16 multiple times, each extension builds on the previous value. For deterministic results, only extend once at startup.
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>Implementation Guide</h2>
+            
+            <h3>Step 1: Compute Expected PCR Values</h3>
+            <div class="step">
+                <div class="step-num">1</div>
+                <div>
+                    <p>Deploy your AMI and read the boot PCR values (4, 7, 12) after first boot:</p>
+                    <pre><code>tpm2_pcrread sha384:4,7,12 | tee pcr_boot_values.txt</code></pre>
+                </div>
+            </div>
+            
+            <h3>Step 2: Compute Model Hash</h3>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div>
+                    <p>Compute the SHA-384 hash of your model files:</p>
+                    <pre><code>python3 -c "
+import hashlib
+sha384 = hashlib.sha384()
+for f in ['boltz1.ckpt', 'boltz1_conf.ckpt', 'ccd.pkl']:
+    with open(f'/opt/boltz/cache/{f}', 'rb') as fp:
+        sha384.update(fp.read())
+print(sha384.hexdigest())
+"</code></pre>
+                </div>
+            </div>
+            
+            <h3>Step 3: Compute Extended PCR16</h3>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div>
+                    <p>Calculate what PCR16 will be after extension:</p>
+                    <pre><code>python3 -c "
+import hashlib
+
+# Initial PCR16 (all zeros)
+pcr16_initial = bytes(48)
+
+# Your model hash (from step 2)
+model_hash = bytes.fromhex('YOUR_MODEL_HASH_HERE')
+
+# Extended value
+pcr16_extended = hashlib.sha384(pcr16_initial + model_hash).hexdigest()
+print(f'PCR16 Extended: {pcr16_extended}')
+"</code></pre>
+                </div>
+            </div>
+            
+            <h3>Step 4: Create KMS Key Policy</h3>
+            <div class="step">
+                <div class="step-num">4</div>
+                <div>
+                    <p>Create or update your KMS key policy with the PCR conditions:</p>
+                    <pre><code>aws kms put-key-policy \
+    --key-id YOUR_KEY_ID \
+    --policy-name default \
+    --policy file://kms-policy.json</code></pre>
+                </div>
+            </div>
+            
+            <h3>Step 5: Encrypt Sensitive Data</h3>
+            <div class="step">
+                <div class="step-num">5</div>
+                <div>
+                    <p>Encrypt your sensitive data with the sealed key:</p>
+                    <pre><code>aws kms encrypt \
+    --key-id YOUR_KEY_ID \
+    --plaintext fileb://secret.txt \
+    --output text --query CiphertextBlob > encrypted.b64</code></pre>
+                </div>
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>Decryption with Attestation</h2>
+            
+            <h3>Python Example</h3>
+            <pre><code>import boto3
+import base64
+import os
+import subprocess
+import tempfile
+from backend.services.attestation import AttestationService
+
+# Initialize services
+attestation_service = AttestationService()
+kms_client = boto3.client('kms')
+
+def decrypt_sealed_data(encrypted_blob: bytes) -> bytes:
+    """Decrypt data whose KMS key policy is conditioned on PCR values.
+
+    KMS never returns bare plaintext when a Recipient attestation is supplied.
+    It re-encrypts the plaintext to the ephemeral public key carried in the
+    attestation document and returns it as CiphertextForRecipient (a CMS/PKCS7
+    envelope), which we unwrap locally with the matching private key.
+    """
+    # 1. Ephemeral RSA key pair; the PUBLIC key is embedded in the attestation doc.
+    priv = subprocess.run(['openssl', 'genrsa', '2048'],
+                          capture_output=True, check=True).stdout
+    pub = subprocess.run(['openssl', 'rsa', '-pubout', '-outform', 'DER'],
+                         input=priv, capture_output=True, check=True).stdout
+
+    # 2. Attestation document carrying the ephemeral public key.
+    attestation = attestation_service.generate_attestation(public_key=pub)
+    raw_attestation = base64.b64decode(attestation.raw_attestation)
+
+    # 3. Decrypt UNDER ATTESTATION.
+    response = kms_client.decrypt(
+        CiphertextBlob=encrypted_blob,
+        Recipient={
+            'KeyEncryptionAlgorithm': 'RSAES_OAEP_SHA_256',
+            'AttestationDocument': raw_attestation
+        }
+    )
+
+    # 4. KMS returns CiphertextForRecipient (NOT Plaintext); unwrap with the private key.
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(priv)
+        priv_path = f.name
+    try:
+        return subprocess.run(
+            ['openssl', 'cms', '-decrypt', '-inform', 'DER', '-inkey', priv_path],
+            input=response['CiphertextForRecipient'], capture_output=True, check=True
+        ).stdout
+    finally:
+        os.unlink(priv_path)
+
+# Usage
+encrypted_data = base64.b64decode(open('encrypted.b64').read())
+plaintext = decrypt_sealed_data(encrypted_data)
+print(f"Decrypted: {plaintext}")</code></pre>
+
+            <div class="alert alert-info">
+                <strong>Note:</strong> AWS KMS never returns bare plaintext when an attestation document is supplied as the Recipient. It returns <code>CiphertextForRecipient</code>, the plaintext re-encrypted to the ephemeral public key from the attestation document, which the application unwraps locally with the matching private key held inside the TEE.
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>Attestation Document Structure</h2>
+            
+            <p>The attestation document from <code>nitro-tpm-attest</code> is a COSE_Sign1 structure containing:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>module_id</code></td>
+                        <td>Identifier for the NitroTPM module</td>
+                    </tr>
+                    <tr>
+                        <td><code>timestamp</code></td>
+                        <td>Generation time (Unix timestamp)</td>
+                    </tr>
+                    <tr>
+                        <td><code>digest</code></td>
+                        <td>Hash algorithm used (SHA384)</td>
+                    </tr>
+                    <tr>
+                        <td><code>nitrotpm_pcrs</code></td>
+                        <td>Map of PCR index to SHA-384 value</td>
+                    </tr>
+                    <tr>
+                        <td><code>certificate</code></td>
+                        <td>TPM attestation key certificate (DER)</td>
+                    </tr>
+                    <tr>
+                        <td><code>cabundle</code></td>
+                        <td>Certificate chain to AWS Nitro root</td>
+                    </tr>
+                    <tr>
+                        <td><code>public_key</code></td>
+                        <td>Optional: public key for sealed responses</td>
+                    </tr>
+                    <tr>
+                        <td><code>nonce</code></td>
+                        <td>Optional: client-provided freshness nonce</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_data</code></td>
+                        <td>Optional: application-specific data</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>Example Attestation Response</h3>
+            <pre><code>{
+    "timestamp": "2026-05-01T18:37:00Z",
+    "nonce": "a1b2c3d4e5f6...",
+    "pcr_values": {
+        "0": "3d458cfe55cc03ea1f443f1562beec8df51c75e14a9fcf9a7234a13f198e7969...",
+        "4": "487f6d5c0bb3f4a7b8e9f0123456789abcdef0123456789abcdef0123456789...",
+        "7": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210...",
+        "12": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef...",
+        "16": "21b9efbc184807662e966d34f390821309eeac6802309798826296bf3e8bec7c..."
+    },
+    "certificate_chain": ["MIIC...", "MIID...", "MIIE..."],
+    "user_data": "arn:aws:iam::123456789012:role/BoltzEC2Role",
+    "enclave_info": {
+        "enclave_type": "aws-nitro",
+        "module_id": "nitro-tpm-1.0"
+    }
+}</code></pre>
+            <div class="alert alert-info">
+                <strong>No self-graded verification fields:</strong> the response deliberately does
+                <em>not</em> carry <code>cose_verified</code> / <code>certificate_chain_verified</code> /
+                <code>root_verified</code>. A service grading its own attestation is no evidence. The
+                backend only <em>produces</em> the signed document; the trust decision is made entirely
+                by the relying party (the browser), which parses the COSE_Sign1, verifies the certificate
+                chain link by link, anchors it to the pinned AWS Nitro root CA, and checks the COSE
+                signature itself. The <code>user_data</code> field echoes the signed instance role ARN
+                the browser binds into the KMS key policy.
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>Verification Workflow (in the browser)</h2>
+
+            <p>Verification runs entirely in the relying party (the browser) against a
+            pinned copy of the AWS Nitro root CA. The backend never grades its own attestation. The
+            browser fetches the signed document from <code>GET /api/v1/attestation</code>, then:</p>
+
+            <div class="mermaid">
+flowchart TB
+    subgraph Verifier["Relying party (browser)"]
+        V1[Fetch Attestation]
+        V2[Parse COSE_Sign1]
+        V3[Verify COSE Signature]
+        V4[Walk Cert Chain link by link]
+        V5[Anchor to pinned AWS Nitro Root]
+        V6[Compare PCR Values to trust store]
+        V7[Decision]
+    end
+
+    V1 --> V2 --> V3 --> V4 --> V5 --> V6 --> V7
+
+    V3 --> |Invalid| REJECT[Reject]
+    V4 --> |Broken chain| REJECT
+    V5 --> |Not AWS Root| REJECT
+    V6 --> |PCR Mismatch| REJECT
+    V7 --> |All Valid| ACCEPT[Accept]
+
+    style ACCEPT fill:#037f0c,color:#fff
+    style REJECT fill:#d13212,color:#fff
+            </div>
+
+            <h3>Verification Code (browser, TypeScript)</h3>
+            <p>The browser verifier is <code>app/frontend/src/services/attestationVerifier.ts</code>. It
+            uses WebCrypto and a pinned root CA (<code>awsNitroRootCa.ts</code>); no backend call
+            is trusted for the verdict.</p>
+            <pre><code>import { inspectAttestationDocument } from './attestationVerifier'
+
+// `raw` is the base64/CBOR COSE_Sign1 document returned by GET /api/v1/attestation.
+const inspection = await inspectAttestationDocument(raw)
+
+// Each step is verified in the browser against the pinned AWS Nitro root:
+if (!inspection.coseSignatureValid) throw new Error('COSE signature invalid')
+if (!inspection.certificateChainValid) throw new Error('certificate chain broken')
+if (!inspection.rootOfTrustValid) throw new Error('not anchored to AWS Nitro root')
+
+// Compare the attested PCRs against the trusted baseline (trust store) the
+// relying party maintains locally. Model key: PCR4/7/12; sequence key: + PCR16.
+const expected = trustStore.pcr_values // { pcr4, pcr7, pcr12, pcr16? }
+for (const [pcr, value] of Object.entries(expected)) {
+  if (inspection.pcrs[pcr] !== value) {
+    throw new Error(`${pcr} mismatch: expected ${value}, got ${inspection.pcrs[pcr]}`)
+  }
+}
+// All checks passed in the browser. The session may now be trusted and cached.</code></pre>
+        </section>
+        
+        <section class="card">
+            <h2>Security Best Practices</h2>
+            
+            <div class="two-col">
+                <div>
+                    <h3>✅ Do</h3>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Always include a fresh nonce in attestation requests</li>
+                        <li>Verify the full certificate chain to AWS root</li>
+                        <li>Bind the PCRs each key actually needs: PCR4/7/12 for the model key, plus PCR16 for the sequence key</li>
+                        <li>Compute expected PCR values from known-good builds</li>
+                        <li>Rotate encrypted secrets regularly</li>
+                        <li>Log attestation failures for security monitoring</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>❌ Avoid</h3>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Accept attestations without verifying signatures</li>
+                        <li>Hardcode PCR values without understanding them</li>
+                        <li>Extend PCR16 multiple times per boot</li>
+                        <li>Skip certificate chain validation</li>
+                        <li>Store expected PCR values in the application itself</li>
+                        <li>Ignore attestation timestamp freshness</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer class="footer">
+        <p>Sample MPC Biomodel EC2 Instance Attestation</p>
+        <p><a href="https://github.com/aws-samples/sample-mpc-biomodel-ec2-instance-attestation">GitHub Repository</a></p>
+    </footer>
+    
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'neutral',
+            flowchart: { useMaxWidth: true, htmlLabels: true }
+        });
+    </script>
+</body>
+</html>

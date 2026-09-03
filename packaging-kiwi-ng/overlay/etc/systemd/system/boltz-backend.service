@@ -1,0 +1,71 @@
+[Unit]
+Description=Boltz Protein Folding Backend API
+Documentation=https://github.com/jwohlwend/boltz
+After=network.target
+Wants=network.target
+# boltz-config.service fetches runtime config (CORS_ORIGINS) from SSM and writes
+# it into /etc/boltz/environment before we start, so it is picked up below. Wants
+# (not Requires) so a config-fetch failure does not block the backend — it just
+# starts with the default closed CORS policy.
+After=boltz-config.service
+Wants=boltz-config.service
+
+[Service]
+Type=simple
+User=boltz
+Group=boltz
+WorkingDirectory=/opt/boltz/app
+
+# Environment
+Environment=PYTHONPATH=/opt/boltz/app
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=PORT=8000
+Environment=MODEL_PATH=/opt/boltz/models
+# Point the Boltz CLI cache (BOLTZ_CACHE) at the SAME dir as MODEL_PATH so the
+# directory the CLI loads weights from is exactly the directory attestation
+# measures into PCR16. Without this they diverge (/opt/boltz/models vs
+# /opt/boltz/cache) and PCR16 would hash a different (empty) directory.
+Environment=BOLTZ_CACHE=/opt/boltz/models
+# NOTE: MODELS_BUCKET is intentionally NOT set. The instance never needs the bucket
+# name ahead of time — every /models/reload request carries the full s3://<bucket>/...
+# URI (the frontend gets it from /boltz/models/latest, written by the workflow which
+# knows the real, CDK-auto-generated bucket name). This decouples the AMI from bucket
+# naming so buckets can be recreated with new names without rebuilding the image.
+Environment=ENABLE_ATTESTATION=true
+Environment=LOG_LEVEL=INFO
+EnvironmentFile=-/etc/boltz/environment
+
+# Start command - use system python with uvicorn
+ExecStart=/usr/bin/python3 -m uvicorn backend.main:app \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --workers 1 \
+    --log-level info
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+# Security - allow TPM access
+NoNewPrivileges=false
+ProtectSystem=false
+ProtectHome=false
+PrivateTmp=false
+PrivateDevices=false
+
+# Supplementary groups for TPM
+SupplementaryGroups=tss
+
+# Resource limits
+LimitNOFILE=65535
+LimitNPROC=4096
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=boltz-backend
+
+[Install]
+WantedBy=multi-user.target

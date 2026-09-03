@@ -1,0 +1,55 @@
+# Grype configuration.
+#
+# Suppressions are deliberate, reviewed exceptions. Each entry below records why the
+# advisory is not actionable for this solution. Anything not listed here is expected to
+# be fixed rather than ignored.
+#
+# ---------------------------------------------------------------------------------------
+# PyTorch (torch 2.6.0) - two local denial-of-service advisories
+# ---------------------------------------------------------------------------------------
+# GHSA-887c-mr87-cxwp / CVE-2025-3730  - improper resource shutdown or release in
+#                                        torch.nn.functional.ctc_loss (fixed in 2.8.0)
+# GHSA-3749-ghw9-m3mg / CVE-2025-2953  - denial of service in torch.mkldnn_max_pool2d
+#                                        (fixed in 2.7.1)
+#
+# Assessment: both are denial-of-service issues (CWE-404) with a CVSS v4 Local attack
+# vector (AV:L, PR:L), and neither permits code execution or data disclosure. Because both
+# flaws require local access to execute code, the direct risk to web-exposed services is
+# typically minimal unless the application evaluates untrusted, user-supplied Python
+# scripts or models directly. This backend does neither. The API accepts only a validated
+# amino-acid sequence and a bounded set of inference options (see PredictionRequest in
+# app/backend/api/models.py and the option validation in _run_boltz_cli), then invokes a
+# fixed Boltz CLI argv. No caller-supplied Python reaches the interpreter, and neither
+# affected entry point (ctc_loss, a training-time sequence loss, and mkldnn_max_pool2d, a
+# CPU pooling kernel) is on the Boltz GPU inference path.
+#
+# The exposure is further reduced by the attestation design itself. The instance is
+# single-tenant, runs only the measured Boltz workload, and has zero operator access, so
+# there is no interactive local principal available to trigger either code path. Model
+# weights are the one runtime-injected input, and they are measured into PCR16, so a
+# substituted model breaks attestation and KMS refuses to release the decryption key.
+#
+# Why not simply upgrade: the fix versions (torch >= 2.7.1, and >= 2.8.0 for CVE-2025-3730)
+# move off the cu124 wheel line that torchvision 0.21.0, torchaudio 2.6.0 and boltz are
+# pinned against. Bumping is deferred until that GPU toolchain is revalidated end to end
+# rather than risk breaking attested inference. Revisit when the pinned stack supports a
+# patched torch; see the matching note in app/requirements.txt.
+ignore:
+  # Matched by GHSA and CVE id so the rule holds regardless of which identifier the
+  # scanner reports for a given database version.
+  - vulnerability: GHSA-887c-mr87-cxwp
+    package:
+      name: torch
+      type: python
+  - vulnerability: CVE-2025-3730
+    package:
+      name: torch
+      type: python
+  - vulnerability: GHSA-3749-ghw9-m3mg
+    package:
+      name: torch
+      type: python
+  - vulnerability: CVE-2025-2953
+    package:
+      name: torch
+      type: python

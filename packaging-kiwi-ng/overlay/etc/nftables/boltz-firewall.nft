@@ -1,0 +1,58 @@
+#!/usr/sbin/nft -f
+#
+# Boltz attested image: fail-closed, interface-agnostic input firewall.
+#
+# This is a STATIC ruleset, not a daemon-generated one. It is loaded once at boot
+# by boltz-firewall.service, ordered Before=network-pre.target, so it is in place
+# before any interface (the primary ENI or a hot-plugged secondary ENI) is
+# configured. The base chain policy is `drop`, so every inbound packet on every
+# interface is denied unless a rule below explicitly allows it. There is no zone
+# model and no per-interface binding to get wrong: coverage is structural.
+#
+# Enforcement lives inside the dm-verity sealed rootfs, so the ruleset is part of
+# the attested image and cannot be altered at runtime. This is the in-TEE
+# firewall; the AWS Security Group is a separate hypervisor-level backstop that
+# sits outside the attestation boundary.
+
+flush ruleset
+
+table inet boltz_filter {
+    chain input {
+        type filter hook input priority 0; policy drop;
+
+        # Return traffic for locally-initiated connections, plus related ICMP
+        # errors (e.g. path-MTU). Drop anything conntrack cannot place.
+        ct state established,related accept
+        ct state invalid drop
+
+        # Loopback is always trusted.
+        iif "lo" accept
+
+        # DHCP client (obtain/renew the VPC lease). Explicit accept avoids the
+        # conntrack broadcast edge case where the offer is not seen as related.
+        udp sport 67 udp dport 68 accept
+        udp sport 547 udp dport 546 accept
+
+        # IPv6 neighbor discovery: required for IPv6 to function at all.
+        meta nfproto ipv6 icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert, nd-router-solicit, nd-router-advert } accept
+
+        # Boltz backend API. This is the only listening service: the frontend is
+        # hosted on Amplify and reaches the instance via API Gateway -> VPC Link ->
+        # internal NLB -> :8000, so no other port is served here. Reachable on any
+        # interface by design; the AWS Security Group and the PRIVATE_ISOLATED
+        # subnet scope the source.
+        tcp dport 8000 accept
+
+        # SSH is enabled ONLY for the foa (dev/test) profile. config.sh uncomments
+        # the next line at build time when the build profile is foa.
+        # __FOA__ tcp dport 22 accept
+    }
+
+    chain forward {
+        type filter hook forward priority 0; policy drop;
+    }
+
+    chain output {
+        type filter hook output priority 0; policy accept;
+    }
+}

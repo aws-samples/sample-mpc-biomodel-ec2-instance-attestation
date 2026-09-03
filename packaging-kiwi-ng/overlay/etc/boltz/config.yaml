@@ -1,0 +1,83 @@
+# Boltz Protein Folding Configuration
+# This file is read by the Boltz service at startup
+
+# Server Configuration
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 1
+  debug: false
+
+# Model Configuration
+model:
+  path: /opt/boltz/models
+  device: auto  # auto, cpu, or cuda
+  max_sequence_length: 2048
+  batch_size: 1
+
+# Attestation Configuration
+attestation:
+  enabled: true
+  tpm_device: /dev/tpmrm0
+  pcr_banks:
+    - sha256
+  validity_seconds: 300
+
+# Security Configuration
+security:
+  # API authentication (set via environment variable for production)
+  api_key_enabled: false
+  api_key_header: X-API-Key
+  
+  # CORS settings
+  cors:
+    enabled: true
+    allow_origins:
+      - "*"
+    allow_methods:
+      - GET
+      - POST
+      - DELETE
+    allow_headers:
+      - "*"
+
+# Logging Configuration
+logging:
+  level: INFO
+  format: json
+  file: /opt/boltz/logs/boltz.log
+  max_size_mb: 100
+  backup_count: 5
+
+# Job Configuration
+jobs:
+  max_concurrent: 4
+  timeout_seconds: 3600
+  cleanup_after_seconds: 86400  # 24 hours
+
+# Storage Configuration
+storage:
+  # Where to store temporary job data
+  temp_dir: /tmp/boltz
+  # Where to store persistent data (if any)
+  data_dir: /opt/boltz/data
+  # Maximum storage per job
+  max_job_size_mb: 100
+
+# Monitoring Configuration
+monitoring:
+  # Prometheus metrics endpoint
+  metrics_enabled: true
+  metrics_path: /metrics
+  
+  # Health check endpoint
+  health_path: /health
+
+# AWS Integration
+aws:
+  # CloudWatch logging (if available)
+  cloudwatch_enabled: false
+  cloudwatch_log_group: /boltz/application
+  
+  # X-Ray tracing (if available)
+  xray_enabled: false

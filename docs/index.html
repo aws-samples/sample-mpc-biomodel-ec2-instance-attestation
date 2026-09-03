@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boltz Protein Folding - Application Overview</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        :root {
+            --primary-color: #0972d3;
+            --secondary-color: #414d5c;
+            --background: #fafafa;
+            --card-bg: #ffffff;
+            --text-color: #16191f;
+            --border-color: #e9ebed;
+            --success-color: #037f0c;
+            --warning-color: #8a6500;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Amazon Ember', 'Helvetica Neue', Roboto, Arial, sans-serif;
+            background: var(--background);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .nav {
+            background: var(--secondary-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .nav a:hover, .nav a.active {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #232f3e 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .card h3 {
+            color: var(--secondary-color);
+            margin: 1.5rem 0 0.75rem;
+        }
+        
+        .mermaid {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        
+        code {
+            background: #f1f3f5;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+        }
+        
+        pre {
+            background: #232f3e;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        pre code {
+            background: transparent;
+            padding: 0;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .feature {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .feature h4 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        
+        .badge-security {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .badge-ml {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .badge-aws {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .footer {
+            background: var(--secondary-color);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+        
+        .footer a {
+            color: #7dd6ff;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <ul>
+            <li><a href="index.html" class="active">Overview</a></li>
+            <li><a href="attestation.html">Attestation</a></li>
+            <li><a href="developer-guide.html">Developer Guide</a></li>
+            <li><a href="packaging.html">Packaging</a></li>
+        </ul>
+    </nav>
+    
+    <header class="hero">
+        <h1>🧬 Boltz Protein Folding with Attestation</h1>
+        <p>Secure protein structure prediction using the Boltz model with hardware-based attestation on AWS EC2 instances with NitroTPM</p>
+    </header>
+    
+    <main class="container">
+        <section class="card">
+            <h2>Application Overview</h2>
+            <p>Boltz is an open machine learning model for protein structure prediction, the task commonly known as protein folding: given an amino acid sequence, it predicts the protein's 3D folded structure. Running it in practice brings together two independently owned assets. The model is a checkpoint of the Boltz base model fine-tuned on proprietary structural data, such as crystallography and cryo-EM measurements, at substantial expense; it is owned by the pharmaceutical or biotechnology organization that produced it, represented in this sample by the computational biophysicist persona, and is treated as core intellectual property. The inputs are the sequences to be folded, owned by the research organization that generated them and represented in this sample by the computational biologist persona: candidate protein sequences, whole-exome panels, variant-call files, and other genomic assays that can represent years of research and carry regulatory obligations.</p>
+
+            <p>For inference to run, the model weights and the input sequences must reside on the same accelerated (GPU) backend and be present together in plaintext. In many collaborations that co-location cannot be achieved by sharing the assets directly. The biophysicist cannot transmit a copy of the weights, because a single exfiltrated checkpoint is fully functional and the disclosure cannot be undone. The biologist cannot expose the sequences to the operator or a co-tenant, because that disclosure can be irreversible and can breach a patent or a compliance obligation. Here the operator is the infrastructure host: the party that owns the AWS account and runs the EC2 instance and Boltz compute, as distinct from the two data owners. Neither party fully trusts that operator, so neither is willing to release its asset to it in plaintext.</p>
+
+            <p>This is a reference sample that demonstrates how the two parties can collaborate by sharing their assets sealed to a trusted execution environment (TEE), never in plaintext to each other or to the operator. Each party seals its asset to the TEE: an immutable EC2 instance, operating under zero-operator access, whose integrity is proven by <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nitrotpm-attestation.html">Amazon EC2 instance attestation</a>. As AWS defines it, attestation "is a process that allows you to cryptographically prove to any party that only trusted software, drivers, and boot processes are running on an Amazon EC2 instance"; it is powered by the Nitro Trusted Platform Module (NitroTPM) and Attestable AMIs. AWS KMS unseals a secret only when the instance's attested Platform Configuration Register (PCR) values match a known-good measurement, with the loaded Boltz weights measured into PCR16. The model weights and the input sequences are therefore decryptable only inside the TEE, GPU memory included, which is the single place they come together for inference and whose software state both parties can independently verify.</p>
+            
+            <div class="features-grid">
+                <div class="feature">
+                    <h4>🔬 Protein Structure Prediction</h4>
+                    <p>Uses the Boltz model for accurate protein folding predictions from amino acid sequences.</p>
+                </div>
+                <div class="feature">
+                    <h4>🔐 Hardware Attestation</h4>
+                    <p>Generates cryptographic proofs via AWS NitroTPM that verify the execution environment integrity.</p>
+                </div>
+                <div class="feature">
+                    <h4>📊 Model Integrity</h4>
+                    <p>ML model weights are hashed and recorded in TPM PCR16, ensuring model authenticity.</p>
+                </div>
+                <div class="feature">
+                    <h4>🔑 KMS Integration</h4>
+                    <p>Seal sensitive inputs to specific PCR values using AWS KMS condition keys.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>System Architecture</h2>
+            <p>A FastAPI backend runs on a NitroTPM-attested EC2 instance for ML inference and attestation; the React/Vite UI is hosted on AWS Amplify and reaches the backend through API Gateway (Cognito JWT) + VPC Link + an internal NLB. The EC2 instance is placed in an isolated private subnet with no route to the internet: the VPC is provisioned with no public subnets and no NAT gateway, and the instance reaches AWS services only through VPC endpoints (S3, KMS, STS, and others).</p>
+
+            <div class="mermaid">
+flowchart TB
+    User((Biologist /<br/>Biophysicist)) --> UI[React UI<br/>AWS Amplify]
+    UI --> |HTTPS + Cognito JWT| APIGW[API Gateway<br/>+ VPC Link + NLB]
+    APIGW --> |HTTP :8000| API
+
+    subgraph AWS["AWS Services"]
+        subgraph S3["Amazon S3, sealed at rest with KMS"]
+            ModelS3[(boltz-models-*<br/>KMS-sealed weights)]
+            SeqS3[(boltz-sequences-*<br/>KMS-sealed sequences)]
+        end
+        KMS[AWS KMS<br/>PCR-conditioned<br/>key policies]
+    end
+
+    subgraph EC2["Attested EC2 Instance = TEE (NitroTPM)"]
+        API[FastAPI Server<br/>Port 8000]
+        API --> Attest[Attestation Service]
+        API --> Boltz[Boltz Service]
+        Attest --> TPM[/NitroTPM<br/>/dev/tpmrm0/]
+        Boltz --> Cache[(Plaintext weights and<br/>sequence, memory only)]
+        API --> Jobs[(Job Store)]
+    end
+
+    ModelS3 -.->|fetch ciphertext| API
+    SeqS3 -.->|fetch ciphertext| API
+    API ==>|Decrypt + attestation doc| KMS
+    KMS ==>|plaintext, only if PCRs match| Cache
+
+    style EC2 fill:#f5f5f5,stroke:#232f3e
+    style TPM fill:#ff9900,stroke:#232f3e,color:#000
+    style KMS fill:#ff9900,stroke:#232f3e,color:#000
+    style ModelS3 fill:#e8f4ff,stroke:#232f3e
+    style SeqS3 fill:#e8f4ff,stroke:#232f3e
+    style Cache fill:#e6ffed,stroke:#232f3e
+            </div>
+
+            <p>The design keeps the attested backend private and performs every sensitive operation inside it. The React user interface hosted on AWS Amplify is the only public surface. A request from either role carries an Amazon Cognito JSON Web Token and reaches the backend through Amazon API Gateway, a VPC Link, and an internal Network Load Balancer; the EC2 instance has no public address, so the operator cannot expose it to the internet directly. Inside the instance, the FastAPI server routes prediction requests to the Boltz service and attestation requests to the attestation service, which reads the NitroTPM device at <code>/dev/tpmrm0</code>. Both protected assets are stored sealed in Amazon S3: the model weights in the <code>boltz-models-*</code> bucket and the input sequences in the <code>boltz-sequences-*</code> bucket, each encrypted with its own AWS KMS key. The sequences are encrypted client-side (a KMS Encrypt call from the browser), and the model weights are envelope-encrypted cloud-side by a CodeBuild model-update workflow, because the weights exceed the size a direct KMS Encrypt call can handle. The backend fetches only ciphertext from S3 and unseals it through an attestation handshake with AWS KMS, which releases a secret only when the instance's PCR values match the key policy and never returns bare plaintext to the caller. The role flows below and the <a href="attestation.html">Attestation</a> page describe this handshake in detail. Unsealing therefore happens inside the trusted execution environment and nowhere else, so plaintext weights and sequences exist only in the instance's host and GPU memory. The instance is therefore the trusted execution environment in which the two assets are combined, and AWS KMS is the verifier that enforces its integrity.</p>
+
+            <p><strong>Transport on the last leg (out of scope for this sample):</strong> The client-to-API Gateway hop uses HTTPS, but the private integration from Amazon API Gateway through the VPC Link and the internal Network Load Balancer to the EC2 backend on port 8000 is HTTP within the VPC. The sensitive assets themselves are protected end to end at the application layer: sequences and model weights are sealed with AWS KMS and are unsealed only inside the attested instance, so they never traverse this leg in plaintext. Even so, a production deployment should terminate TLS on this hop as well, so that request metadata, authorization tokens, and prediction responses are also encrypted in transit. Provision a certificate with <a href="https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html">AWS Certificate Manager (ACM)</a> and serve the backend behind a TLS listener. This sample leaves the leg as HTTP to stay focused on the attestation and sealing mechanism.</p>
+        </section>
+        
+        <section class="card">
+            <h2>Roles and protected intellectual property</h2>
+            <p>The reference sample protects <strong>two</strong> separate pieces of intellectual
+            property, each owned by a different organization. In both flows, <strong>attestation
+            is the first step</strong>: you verify the backend's PCRs and bind a KMS key policy
+            to them <em>before</em> any secret is sealed, so that data can be
+            decrypted only on a backend whose measurements you already trust. The attestation
+            mechanism these flows rely on, including the PCR measurements, the trust chain to the
+            AWS Nitro root, and the KMS key-policy conditions, is described in detail on the
+            <a href="attestation.html">Attestation</a> page.</p>
+
+            <table>
+                <tr><th>Role</th><th>Protects</th><th>KMS key</th><th>S3 bucket</th></tr>
+                <tr><td>🔬 Computational <strong>Biophysicist</strong></td><td>Model weights (Boltz-1)</td><td><code>alias/boltz-model-key</code></td><td><code>boltz-models-*</code></td></tr>
+                <tr><td>🧬 Computational <strong>Biologist</strong></td><td>Input protein sequences</td><td><code>alias/boltz-sequence-key</code></td><td><code>boltz-sequences-*</code></td></tr>
+            </table>
+
+            <h3>🔬 Biophysicist: seal and deploy the model weights</h3>
+            <div class="mermaid">
+sequenceDiagram
+    participant BP as Biophysicist (UI)
+    participant Backend as Attested EC2
+    participant KMS
+    participant WF as Model Workflow (CodeBuild)
+    participant S3
+
+    Note over BP,Backend: 1. Attestation FIRST
+    BP->>Backend: Connect &amp; Verify (GET /attestation?nonce)
+    Backend-->>BP: COSE-signed doc + PCRs
+    BP->>BP: Verify signature + chain, save trust store (browser)
+    BP->>KMS: Bind key policy to attested PCR4/7/12 (model key, not PCR16)
+
+    Note over BP,S3: 2. Produce encrypted weights
+    BP->>WF: Start model-update workflow
+    WF->>WF: Download Boltz-1 from HuggingFace
+    WF->>KMS: GenerateDataKey (envelope, model key)
+    WF->>S3: Upload envelope-encrypted weights
+
+    Note over BP,Backend: 3. Deploy (in-place reload)
+    BP->>Backend: POST /models/reload
+    Backend->>S3: Fetch encrypted weights
+    Backend->>KMS: Decrypt UNDER ATTESTATION (Recipient = attestation doc)
+    KMS-->>Backend: Data key encrypted to instance public key (only if PCRs match)
+    Backend->>Backend: Unwrap data key with private key, decrypt weights, re-extend PCR16
+</div>
+
+            <p>This flow shows how the pharmaceutical or biotechnology organization publishes its fine-tuned weights without exposing them to the operator. Attestation is the first step: the biophysicist connects to the backend, receives a COSE-signed attestation document carrying the instance's PCR values (the platform and boot measurements in PCR4, 7, and 12 are fixed at launch and do not change thereafter, while PCR16 changes only when a different model is loaded and re-measured into it), verifies the signature and certificate chain against the AWS Nitro root, and records the measurements as the trusted baseline in the browser. Only then does the biophysicist bind the model key policy (<code>alias/boltz-model-key</code>) to the attested platform and boot measurements, PCR4, 7, and 12, so the weights are released only onto an instance whose platform integrity is proven. The model key is deliberately not bound to PCR16: the model weights are what get measured into PCR16, so at the moment the weights are decrypted the model is not yet loaded and PCR16 does not describe it, and binding the model to its own not-yet-loaded measurement would be circular. PCR16 instead gates the sequence key described below, which commits a submitted sequence to the specific model that is loaded. A CodeBuild workflow then downloads the Boltz base model, envelope-encrypts the weights with the model key, and stores the ciphertext in the models S3 bucket; the plaintext weights exist only inside the workflow and, later, the attested instance. To deploy, the backend fetches the ciphertext and calls AWS KMS with the attestation document attached as the recipient. AWS KMS never returns the data key in the clear; only if the instance's PCRs still match the policy does it return the data key encrypted to the ephemeral public key of the attested EC2 instance from the attestation document, which the instance unwraps with the matching private key held inside the TEE and then uses to decrypt the weights. The weights are therefore unsealed on no other machine. The backend then re-extends PCR16 with the hash of the loaded weights, making the identity of the running model part of the attested state that the biologist verifies before submitting a sequence.</p>
+
+            <h3>🧬 Biologist: seal a sequence and obtain a structure</h3>
+            <div class="mermaid">
+sequenceDiagram
+    participant Bio as Biologist (UI)
+    participant Backend as Attested EC2
+    participant KMS
+    participant S3
+    participant Boltz
+
+    Note over Bio,Backend: 1. Attestation FIRST
+    Bio->>Backend: Connect &amp; Verify (GET /attestation?nonce)
+    Backend-->>Bio: COSE-signed doc + PCRs
+    Bio->>Bio: Verify + save trust store (browser)
+    Bio->>KMS: Bind key policy to attested PCR4/7/12/16 (sequence key)
+
+    Note over Bio,S3: 2. Seal the sequence (client-side)
+    Bio->>KMS: Encrypt sequence (encryption context)
+    Bio->>S3: Upload encrypted sequence
+
+    Note over Bio,Boltz: 3. Predict
+    Bio->>Backend: POST /predict (encrypted_sequence + context)
+    Backend->>KMS: Decrypt UNDER ATTESTATION (Recipient = attestation doc)
+    KMS-->>Backend: Plaintext sequence (only if PCRs match policy)
+    Backend->>Boltz: Fold on GPU (single-sequence)
+    Boltz-->>Backend: PDB structure
+    Backend-->>Bio: Structure + pLDDT (poll /results/{job_id})
+</div>
+
+            <p>This flow shows how the research organization submits a proprietary sequence for folding without disclosing it to the operator. As before, attestation is the first step: the biologist verifies the backend's attestation document and binds the sequence key policy (<code>alias/boltz-sequence-key</code>) to the attested PCRs, which include PCR16 and therefore commit to the specific model that is loaded. The biologist then seals the sequence on the client by encrypting it with the sequence key under a fixed encryption context, and uploads only the ciphertext to the sequences S3 bucket. To run a prediction, the backend calls AWS KMS with the attestation document attached; AWS KMS never returns the plaintext sequence directly. Only if the running instance still matches the policy does KMS re-encrypt the sequence to the ephemeral public key from the attestation document and return it wrapped as CiphertextForRecipient, which the instance unwraps with the matching private key held inside the TEE. The sequence is unsealed inside the instance, folded on the GPU, and returned as a PDB structure with a pLDDT confidence score. Because the measured boundary is the entire instance, the sequence and the weights come together in plaintext only in host and GPU memory that both organizations have attested, and the operator has no path to either asset.</p>
+        </section>
+
+        <section class="card">
+            <h2>Key Components</h2>
+            <p>The backend is organized as a small set of services behind the FastAPI server. The attestation service produces the signed measurements (the attestation validator parses them for the document it returns), while the trust decision itself is made by the relying party in the browser, and the Boltz service performs inference once a secret has been unsealed. The routes below are the public API surface reached through API Gateway.</p>
+            
+            <h3>Backend Services</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>File</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Attestation Service</strong></td>
+                        <td><code>attestation.py</code></td>
+                        <td>TPM interaction, PCR extension, attestation document generation</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Attestation Validator</strong></td>
+                        <td><code>attestation_validator.py</code></td>
+                        <td>Validate COSE signatures, parse attestation documents</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Boltz Service</strong></td>
+                        <td><code>boltz_service.py</code></td>
+                        <td>ML model inference, structure prediction</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Certificate Parser</strong></td>
+                        <td><code>certificate_parser.py</code></td>
+                        <td>X.509 certificate chain validation</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>API Routes</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/api/v1/predict</code></td>
+                        <td>POST</td>
+                        <td>Submit protein sequence for prediction</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/v1/results/{job_id}</code></td>
+                        <td>GET</td>
+                        <td>Get prediction results with attestation</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/v1/attestation</code></td>
+                        <td>GET</td>
+                        <td>Generate a fresh signed attestation document (verified in the browser)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <section class="card">
+            <h2>Security Model</h2>
+            <p>The diagram maps the primary threats to this collaboration to the measured controls that address them. The mechanisms follow.</p>
+            
+            <div class="mermaid">
+flowchart LR
+    subgraph "Threats Mitigated"
+        T1[Model Tampering]
+        T2[Code Modification]
+        T3[Replay Attacks]
+        T4[Unauthorized Access]
+    end
+    
+    subgraph "Protections"
+        P1[PCR16 Model Hash]
+        P2[PCR0-12 Boot Measurements]
+        P3[Nonce in Attestation]
+        P4[KMS PCR Conditions]
+    end
+    
+    T1 -.-> P1
+    T2 -.-> P2
+    T3 -.-> P3
+    T4 -.-> P4
+    
+    style P1 fill:#037f0c,color:#fff
+    style P2 fill:#037f0c,color:#fff
+    style P3 fill:#037f0c,color:#fff
+    style P4 fill:#037f0c,color:#fff
+            </div>
+
+            <ul>
+                <li><strong>Model tampering</strong>: if the weights on disk are swapped or modified, the SHA-384 hash extended into PCR16 changes, the attestation no longer matches the bound key policies, and AWS KMS refuses to decrypt. A substituted model cannot be used to process either party's data.</li>
+                <li><strong>Code modification</strong>: the platform and boot measurements in PCR0 through PCR12 change if the firmware, boot manager, secure-boot state, or kernel command line is altered, so a backend running modified code fails attestation and cannot obtain the data keys.</li>
+                <li><strong>Replay attacks</strong>: each attestation request includes a fresh nonce that is bound into the signed document, so the operator cannot capture a valid attestation from a good instance and replay it from a compromised one.</li>
+                <li><strong>Unauthorized access</strong>: decryption is gated by KMS key-policy conditions on the attested PCR values, expressed as an explicit Deny, so possession of a credential is not sufficient. The request must originate from an instance in the exact measured state.</li>
+            </ul>
+        </section>
+    </main>
+    
+    <footer class="footer">
+        <p>Sample MPC Biomodel EC2 Instance Attestation</p>
+        <p><a href="https://github.com/aws-samples/sample-mpc-biomodel-ec2-instance-attestation">GitHub Repository</a></p>
+    </footer>
+    
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'neutral',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+</html>

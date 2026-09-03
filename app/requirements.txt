@@ -1,0 +1,78 @@
+# PyTorch with CUDA support - use NVIDIA's index for GPU-enabled wheels
+--extra-index-url https://download.pytorch.org/whl/cu124
+
+# FastAPI and web server
+# Versions bumped to address advisories (grype):
+#   starlette -> O(n^2) DoS via Range-header merging in FileResponse
+#     (GHSA-7f5h-v6xp-fcq8, affects >=0.39.0,<=0.49.0); fixed in 0.49.1. This one IS
+#     reachable here: api/routes.py serves result files with FileResponse, so an
+#     unauthenticated Range header could burn CPU. Pinned to 0.49.3 (the newest 0.49.x,
+#     the last line that still supports the AL2023 system Python 3.9).
+#   Earlier starlette multipart/large-form advisories (GHSA-f96h-pmfr-66vw,
+#     GHSA-2c2j-9gv5-cj73) are also covered by this version.
+#   fastapi bumped in lockstep so it accepts the patched starlette: 0.116.1 capped it at
+#     <0.48.0. 0.124.4 allows <0.51.0 and is the newest release still supporting 3.9
+#     (0.128.0 requires >=3.9 but 0.129.0+ require >=3.10).
+#
+# python-multipart was REMOVED rather than bumped. It is only needed for form/file
+# endpoints (UploadFile / File() / Form()), and this API is JSON-only: there is no
+# multipart endpoint anywhere in app/backend. Dropping it eliminates the arbitrary-file-
+# write advisory (GHSA-wp53-j4wj-2cfg) outright instead of carrying a pinned dependency,
+# and the patched 0.0.22+ line requires Python >=3.10 which the AL2023 system Python does
+# not provide. Re-add it (>=0.0.22, on Python >=3.10) if a multipart endpoint is ever
+# introduced; FastAPI raises a clear startup error if one is added without it.
+fastapi==0.124.4
+uvicorn[standard]==0.27.0
+starlette==0.49.3
+
+# Boltz protein folding dependencies
+boltz>=0.4.0
+# Pin torch to 2.6.0 for cu124 compatibility (torchvision/torchaudio require this version).
+# grype flags two torch advisories at this version:
+#   GHSA-887c-mr87-cxwp / CVE-2025-3730 - improper resource release in
+#     torch.nn.functional.ctc_loss (fixed in 2.8.0)
+#   GHSA-3749-ghw9-m3mg / CVE-2025-2953 - denial of service in torch.mkldnn_max_pool2d
+#     (fixed in 2.7.1)
+# Both are LOCAL denial-of-service / resource issues (CWE-404, CVSS AV:L), not remote code
+# execution or data disclosure. Because both flaws require local access to execute code,
+# the direct risk to web-exposed services is typically minimal unless the application
+# evaluates untrusted, user-supplied Python scripts or models directly. This backend does
+# neither, and the instance is single-tenant, runs only the attested Boltz workload, and
+# has no interactive/operator access (ZOA), so there is no local attacker to trigger them.
+# The fix versions (torch >= 2.7.1, and >= 2.8.0 for CVE-2025-3730) move off the cu124
+# wheel line that torchvision/torchaudio and boltz are pinned against, so bumping is
+# deferred until that toolchain is revalidated end to end rather than risk breaking
+# attested inference. Both are suppressed in .grype.yaml with the full rationale; revisit
+# that file when the pinned GPU stack supports a patched torch.
+torch==2.6.0
+torchvision==0.21.0
+torchaudio==2.6.0
+numpy>=1.24.0
+biopython>=1.81
+einops>=0.7.0
+pyyaml>=6.0.0
+
+# Attestation and cryptography
+cryptography>=41.0.0
+pycryptodome>=3.19.0
+pyasn1>=0.5.0
+cbor2>=5.4.0
+
+# AWS SDK
+boto3>=1.34.0
+
+# Utilities
+pydantic>=2.5.0
+python-dotenv>=1.0.0
+python-dateutil>=2.1,<=2.9.0  # Pin for awscli compatibility
+aiofiles>=23.2.1
+httpx>=0.26.0
+
+# Logging and monitoring
+structlog>=24.1.0
+prometheus-client>=0.19.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.23.0
+httpx>=0.26.0

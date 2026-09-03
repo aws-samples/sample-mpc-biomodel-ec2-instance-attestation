@@ -1,0 +1,144 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+# Anchor Python build dirs to repo root so they don't match cdk/lib etc.
+/lib/
+/lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.local.env
+
+# Model weights and cache (large files)
+*.ckpt
+*.pt
+*.pth
+*.pkl
+*.safetensors
+models/
+cache/
+predictions/
+/opt/boltz/
+
+# Do not ignore frontend source dirs that share those names (they are app code,
+# not model-weight/prediction-output data directories)
+!app/frontend/src/components/models/
+!app/frontend/src/components/models/**
+!app/frontend/src/components/predictions/
+!app/frontend/src/components/predictions/**
+
+# TPM/Security sensitive files
+*.pem
+*.key
+*.crt
+tpm_keys/
+secrets/
+
+# Build artifacts
+*.iso
+*.qcow2
+*.raw
+*.ami
+kiwi-build/
+image-root/
+packaging-kiwi-ng/output/
+packaging-kiwi-ng/build-output.log
+# Only the app dir under opt/boltz is build-generated (populated by build.sh at build
+# time). The rest of overlay/opt (e.g. opt/boltz/bin tooling) is hand-authored source
+# that must be tracked, shipped in source.zip, and published.
+packaging-kiwi-ng/overlay/opt/boltz/app/
+packaging-kiwi-ng/kiwi/overlay.tar.gz
+
+# Documentation build
+docs/_build/
+docs/site/
+
+# Job data (runtime)
+jobs/
+job_store.db
+*.sqlite
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Coverage reports
+coverage.xml
+*.cover
+
+# Node modules (if any frontend build tools)
+node_modules/
+# package-lock.json is deliberately NOT ignored. It pins the entire transitive
+# dependency tree with integrity hashes, so `npm ci` reproduces the exact tree we
+# tested and scanned. Ignoring it would let transitive versions drift on every
+# fresh clone even though the direct dependencies in package.json are pinned.
+
+# Docker
+.docker/
+
+# AWS
+.aws/
+
+# CDK
+cdk/cdk.out/
+cdk/cdk-outputs.json
+cdk/cdk.context.json
+cdk/dist/
+
+# Change tracking (working notes, not committed)
+CHANGES.md
+app_changes.md
+# Generated Cognito config (never commit)
+.env.cognito
+app/frontend/.env.cognito

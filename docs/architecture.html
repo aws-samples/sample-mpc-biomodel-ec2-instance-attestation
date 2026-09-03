@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boltz Architecture - MPC Biomodel EC2 Attestation</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-purple: #a371f7;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin: 2.5rem 0 1.5rem 0;
+            color: var(--accent-blue);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+        
+        h3 {
+            font-size: 1.4rem;
+            margin: 2rem 0 1rem 0;
+            color: var(--accent-green);
+        }
+        
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+        
+        .diagram-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+        
+        .diagram-title {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .diagram-title .icon {
+            font-size: 1.3rem;
+        }
+        
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .card-icon {
+            font-size: 1.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .feature-list {
+            list-style: none;
+        }
+        
+        .feature-list li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .feature-list li::before {
+            content: "✓";
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .badge-blue { background: rgba(88, 166, 255, 0.2); color: var(--accent-blue); }
+        .badge-green { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+        .badge-purple { background: rgba(163, 113, 247, 0.2); color: var(--accent-purple); }
+        .badge-orange { background: rgba(210, 153, 34, 0.2); color: var(--accent-orange); }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        td {
+            color: var(--text-secondary);
+        }
+        
+        code {
+            background: var(--bg-tertiary);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            color: var(--accent-orange);
+        }
+        
+        .mermaid {
+            background: transparent !important;
+        }
+        
+        nav {
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+            margin-bottom: 2rem;
+        }
+        
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        nav a:hover {
+            color: var(--accent-blue);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧬 Boltz-1 MPC Architecture</h1>
+            <p class="subtitle">Secure Protein Structure Prediction with AWS NitroTPM Attestation</p>
+        </header>
+        
+        <nav>
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#biologist">Biologist Flow</a></li>
+                <li><a href="#biophysicist">Biophysicist Flow</a></li>
+                <li><a href="#infrastructure">Infrastructure</a></li>
+                <li><a href="#components">Components</a></li>
+            </ul>
+        </nav>
+        
+        <section id="overview">
+            <h2>System Overview</h2>
+            <p>
+                This system enables secure protein structure prediction using the 
+                <span class="badge badge-blue">Boltz-1</span> model with hardware-level security 
+                guarantees through AWS NitroTPM attestation. Two roles collaborate while maintaining 
+                cryptographic separation of concerns.
+            </p>
+            
+            <div class="diagram-container">
+                <div class="diagram-title"><span class="icon">🏗️</span> High-Level Architecture</div>
+                <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22'}}}%%
+flowchart TB
+    subgraph Users["👥 Users"]
+        Bio[🧬 Biologist]
+        BioPhys[🔬 Biophysicist]
+    end
+    
+    subgraph Frontend["🌐 Frontend (AWS Amplify)"]
+        UI[React Application]
+        Cognito[AWS Cognito]
+    end
+    
+    subgraph Backend["🖥️ Backend (EC2 + NitroTPM)"]
+        ASG[Auto Scaling Group]
+        NLB[Network Load Balancer]
+        EC2[EC2 Instances<br/>with TPM 2.0]
+        Boltz[Boltz-1 Model]
+    end
+    
+    subgraph Storage["💾 Storage & Secrets"]
+        S3Seq[(S3: Encrypted<br/>Sequences)]
+        S3Model[(S3: Encrypted<br/>Model Weights)]
+        KMS[AWS KMS<br/>PCR-Gated Keys]
+        SSM[SSM Parameter<br/>Store]
+    end
+    
+    subgraph Events["📡 Events"]
+        EB[EventBridge]
+        Lambda[Lambda<br/>Notification Handler]
+    end
+    
+    Bio --> UI
+    BioPhys --> UI
+    UI --> Cognito
+    UI --> NLB
+    NLB --> ASG
+    ASG --> EC2
+    EC2 --> Boltz
+    EC2 --> KMS
+    EC2 --> S3Seq
+    EC2 --> S3Model
+    BioPhys -.-> EB
+    EB --> Lambda
+    Lambda --> SSM
+    Lambda -.-> Bio
+                </pre>
+            </div>
+            
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">🧬</span>
+                        <span class="card-title">Computational Biologist</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li>Submits protein sequences for prediction</li>
+                        <li>Encrypts sequences with KMS</li>
+                        <li>Verifies backend attestation</li>
+                        <li>Updates KMS policy with PCR values</li>
+                        <li>Downloads prediction results</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">🔬</span>
+                        <span class="card-title">Computational Biophysicist</span>
+                    </div>
+                    <ul class="feature-list">
+                        <li>Downloads model weights from HuggingFace</li>
+                        <li>Encrypts and uploads new models</li>
+                        <li>Triggers rolling deployments</li>
+                        <li>Updates model version SSM parameters</li>
+                        <li>Notifies biologists of updates</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <section id="biologist">
+            <h2>🧬 Biologist Workflow</h2>
+            <p>
+                The biologist's primary goal is to predict 3D protein structures from amino acid sequences.
+                All sequences are encrypted before leaving the browser, and can only be decrypted by
+                attested backend instances.
+            </p>
+            <p>
+                <strong>Prerequisite: attestation before sealing.</strong> before encrypting anything, the biologist
+                connects to the backend, verifies its attestation (Connect &amp; Verify → check PCRs against
+                the browser trust store), and binds the <code>alias/boltz-sequence-key</code> KMS policy to
+                those PCRs. Only then is a sequence sealed, so that it can be decrypted <em>only</em> on a backend
+                whose measurements were already trusted. The flow below shows the sealing and prediction steps that
+                follow.
+            </p>
+            
+            <div class="diagram-container">
+                <div class="diagram-title"><span class="icon">🔐</span> Sequence Encryption & Prediction Flow</div>
+                <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#3fb950', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22'}}}%%
+sequenceDiagram
+    participant Bio as 🧬 Biologist
+    participant UI as 🌐 Frontend
+    participant KMS as 🔑 AWS KMS
+    participant S3 as 📦 S3 Bucket
+    participant BE as 🖥️ Backend
+    participant TPM as 🛡️ NitroTPM
+    
+    Bio->>UI: Enter protein sequence
+    Note over UI: Validate amino acids
+    
+    UI->>KMS: Encrypt sequence<br/>(boltz-sequence-key)
+    KMS-->>UI: Encrypted ciphertext
+    
+    UI->>S3: Upload encrypted sequence
+    S3-->>UI: S3 key
+    
+    Bio->>UI: Submit prediction
+    UI->>BE: POST /predict<br/>{s3_key, encryption_context}
+    
+    BE->>TPM: Get attestation document
+    TPM-->>BE: Signed attestation + PCRs
+    
+    BE->>KMS: Decrypt with attestation<br/>(Recipient field)
+    Note over KMS: Verify PCR conditions<br/>in key policy
+    KMS-->>BE: Decrypted sequence
+    
+    BE->>BE: Run Boltz-1 prediction
+    BE-->>UI: PDB structure + confidence
+    UI-->>Bio: Display 3D structure
+                </pre>
+            </div>
+            
+            <h3>Trust Store Management</h3>
+            <div class="diagram-container">
+                <div class="diagram-title"><span class="icon">✅</span> Attestation Verification Flow</div>
+                <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22'}}}%%
+flowchart TD
+    A[🧬 Connect to Backend] --> B[Generate Random Nonce]
+    B --> C[GET /attestation?nonce=xyz]
+    C --> D{Verify COSE<br/>Signature}
+    D -->|Invalid| E[❌ Reject Connection]
+    D -->|Valid| F[Extract PCR Values]
+    F --> G[Fetch Trust Store<br/>from browser localStorage]
+    G --> H{PCRs Match<br/>Trust Store?}
+    H -->|Yes| I[✅ Backend Verified]
+    H -->|No| J{New PCRs or<br/>Changed?}
+    J -->|New Backend| K[Prompt: Add to<br/>Trust Store?]
+    J -->|Changed| L[⚠️ Warning: PCRs Changed]
+    K --> M[Update browser trust store<br/>+ optionally KMS Policy]
+    M --> I
+    
+    style I fill:#238636,color:#fff
+    style E fill:#da3633,color:#fff
+    style L fill:#9e6a03,color:#fff
+                </pre>
+            </div>
+        </section>
+        
+        <section id="biophysicist">
+            <h2>🔬 Biophysicist Workflow</h2>
+            <p>
+                The biophysicist manages model weights, downloads updates from HuggingFace, and
+                coordinates secure deployment to backend instances.
+            </p>
+            <p>
+                <strong>Prerequisite: attestation before sealing.</strong> as with the biologist, the biophysicist
+                verifies backend attestation and binds the <code>alias/boltz-model-key</code> KMS policy to
+                the attested PCRs before producing encrypted weights. The update flow below produces the
+                envelope-encrypted weights in S3; <strong>deploy</strong> then reloads them in-place, where
+                the backend decrypts them <em>only under attestation</em> (KMS Recipient flow) and re-extends
+                PCR16 with the new model hash.
+            </p>
+            
+            <div class="diagram-container">
+                <div class="diagram-title"><span class="icon">📥</span> Model Weight Update Flow</div>
+                <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#a371f7', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22'}}}%%
+sequenceDiagram
+    participant BP as 🔬 Biophysicist
+    participant UI as 🌐 Frontend
+    participant SF as ⚡ Step Function
+    participant HF as 🤗 HuggingFace
+    participant KMS as 🔑 AWS KMS
+    participant S3 as 📦 S3 Bucket
+    participant SSM as 📋 SSM
+    participant EB as 📡 EventBridge
+    
+    BP->>UI: Select model version<br/>(boltz-community/boltz-1)
+    UI->>SF: Start model update workflow
+    
+    SF->>HF: Download model weights
+    HF-->>SF: ~4.6 GB weights
+    
+    SF->>SF: Calculate SHA384 hash
+    
+    SF->>KMS: Generate data key<br/>(boltz-model-key)
+    KMS-->>SF: Plaintext + Encrypted DEK
+    
+    SF->>SF: Encrypt weights with DEK
+    
+    SF->>S3: Upload encrypted weights +<br/>encrypted DEK
+    S3-->>SF: S3 location
+    
+    SF->>SSM: Create new version parameter<br/>/boltz/models/v{n}
+    
+    SF->>SSM: Update "latest" pointer<br/>/boltz/models/latest
+    
+    SF->>EB: Publish: Model Available
+    EB->>UI: 🔔 Notification
+    UI-->>BP: New model ready!
+                </pre>
+            </div>
+            
+            <h3>Deployment Options</h3>
+            <div class="diagram-container">
+                <div class="diagram-title"><span class="icon">🚀</span> Model Deployment Strategies</div>
+                <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#d29922', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22'}}}%%
+flowchart TD
+    A[🔬 Select Model Version] --> B{Deployment<br/>Strategy}
+    
+    B -->|Option 1| C[🔄 In-Place Update]
+    B -->|Option 2| D[♻️ Instance Recycle]
+    
+    C --> C1[POST /models/reload]
+    C1 --> C2[Download from S3]
+    C2 --> C3[Decrypt with Attestation]
+    C3 --> C4[Load into GPU Memory]
+    C4 --> C5[✅ Model Hot-Swapped]
+    
+    D --> D1[Update Launch Template]
+    D1 --> D2[ASG Instance Refresh]
+    D2 --> D3[New Instances Launch]
+    D3 --> D4[Fetch Latest Weights]
+    D4 --> D5[Old Instances Terminate]
+    D5 --> D6[✅ Rolling Complete]
+    
+    C5 --> E[Notify Biologists:<br/>Verify New PCRs]
+    D6 --> E
+    
+    style C fill:#238636,color:#fff
+    style D fill:#1f6feb,color:#fff
+    style E fill:#a371f7,color:#fff
+                </pre>
+            </div>
+            
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">🔄</span>
+                        <span class="card-title">In-Place Update</span>
+                    </div>
+                    <p>Hot-swap model weights without instance restart.</p>
+                    <ul class="feature-list">
+                        <li>Zero downtime</li>
+                        <li>Same PCR4/PCR7 values</li>
+                        <li>PCR16 changes (model hash)</li>
+                        <li>Faster deployment</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-icon">♻️</span>
+                        <span class="card-title">Instance Recycle</span>
+                    </div>
+                    <p>Rolling replacement via ASG refresh.</p>
+                    <ul class="feature-list">
+                        <li>Clean instance state</li>
+                        <li>New AMI if available</li>
+                        <li>All PCRs may change</li>
+                        <li>50% minimum healthy</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <section id="infrastructure">
+            <h2>🏗️ Infrastructure Components</h2>
+            
+            <div class="diagram-container">
+                <div class="diagram-title"><span class="icon">☁️</span> AWS Infrastructure</div>
+                <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#58a6ff', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22'}}}%%
+flowchart TB
+    subgraph Internet
+        Users[👥 Users]
+    end
+    
+    subgraph AWS["☁️ AWS Cloud"]
+        subgraph Frontend["Frontend Layer"]
+            Amplify[AWS Amplify<br/>React App]
+            Cognito[Cognito<br/>User Pool]
+            IDPool[Cognito<br/>Identity Pool]
+        end
+        
+        subgraph Compute["Compute Layer"]
+            NLB[Network<br/>Load Balancer]
+            ASG[Auto Scaling<br/>Group]
+            LT[Launch<br/>Template]
+            EC2A[EC2 + TPM<br/>AZ-a]
+            EC2B[EC2 + TPM<br/>AZ-b]
+        end
+        
+        subgraph Security["Security Layer"]
+            KMSSeq[KMS Key<br/>boltz-sequence-key]
+            KMSModel[KMS Key<br/>boltz-model-key]
+            IAMRole[EC2 IAM Role<br/>boltz-backend-role]
+        end
+        
+        subgraph Storage["Storage Layer"]
+            S3Seq[(S3<br/>boltz-sequences-prod)]
+            S3Model[(S3<br/>boltz-models-prod)]
+            SSM[(SSM Parameter<br/>Store)]
+        end
+        
+        subgraph Events["Event Layer"]
+            EventBridge[EventBridge<br/>boltz-events]
+            Lambda[Lambda<br/>Notification Handler]
+            StepFn[Step Functions<br/>Model Workflow]
+        end
+    end
+    
+    Users --> Amplify
+    Amplify --> Cognito
+    Cognito --> IDPool
+    IDPool --> IAMRole
+    
+    Users --> NLB
+    NLB --> ASG
+    ASG --> LT
+    LT --> EC2A & EC2B
+    
+    EC2A & EC2B --> KMSSeq & KMSModel
+    EC2A & EC2B --> S3Seq & S3Model
+    
+    StepFn --> S3Model
+    StepFn --> SSM
+    StepFn --> EventBridge
+    EventBridge --> Lambda
+    Lambda --> SSM
+                </pre>
+            </div>
+            
+            <h3>Resource Summary</h3>
+            <table>
+                <tr>
+                    <th>Resource</th>
+                    <th>Name/ID</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>ASG</td>
+                    <td><code>boltz-backend-asg</code></td>
+                    <td>Auto scaling for backend instances</td>
+                </tr>
+                <tr>
+                    <td>Launch Template</td>
+                    <td><code>boltz-backend-lt</code></td>
+                    <td>EC2 instance configuration</td>
+                </tr>
+                <tr>
+                    <td>Target Group</td>
+                    <td><code>boltz-backend-tg</code></td>
+                    <td>Health checks on port 8000</td>
+                </tr>
+                <tr>
+                    <td>Security Group</td>
+                    <td><code>boltz-backend-sg</code></td>
+                    <td>Allow 8000 (API), 22 (SSH)</td>
+                </tr>
+                <tr>
+                    <td>EventBridge Bus</td>
+                    <td><code>boltz-events</code></td>
+                    <td>Cross-role notifications</td>
+                </tr>
+                <tr>
+                    <td>Lambda</td>
+                    <td><code>boltz-notification-handler</code></td>
+                    <td>Store notifications in SSM</td>
+                </tr>
+                <tr>
+                    <td>KMS Key (Sequences)</td>
+                    <td><code>alias/boltz-sequence-key</code></td>
+                    <td>Encrypt biologist sequences</td>
+                </tr>
+                <tr>
+                    <td>KMS Key (Models)</td>
+                    <td><code>alias/boltz-model-key</code></td>
+                    <td>Encrypt model weights</td>
+                </tr>
+            </table>
+        </section>
+        
+        <section id="components">
+            <h2>📦 PCR Values & Attestation</h2>
+            
+            <div class="diagram-container">
+                <div class="diagram-title"><span class="icon">🛡️</span> PCR Measurement Chain</div>
+                <pre class="mermaid">
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#f85149', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#30363d', 'lineColor': '#8b949e', 'secondaryColor': '#21262d', 'tertiaryColor': '#161b22'}}}%%
+flowchart LR
+    subgraph Boot["🔐 Boot Chain (PCR 0-7)"]
+        BIOS[BIOS/UEFI<br/>PCR0]
+        Config[Platform Config<br/>PCR1]
+        Bootloader[Boot Loader<br/>PCR4]
+        SecureBoot[Secure Boot<br/>PCR7]
+    end
+    
+    subgraph App["📱 Application (PCR 12-16)"]
+        UserData[Cloud-init<br/>PCR12]
+        Model[Boltz-1 Model<br/>PCR16]
+    end
+    
+    subgraph Policy["🔑 KMS Policy"]
+        KMS[KMS Key<br/>Decrypt Condition]
+    end
+    
+    BIOS --> Config --> Bootloader --> SecureBoot
+    SecureBoot --> UserData --> Model
+    
+    BIOS & Bootloader & SecureBoot & Model --> KMS
+    
+    style Model fill:#a371f7,color:#fff
+    style KMS fill:#238636,color:#fff
+                </pre>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">📋</span>
+                    <span class="card-title">PCR Values Used</span>
+                </div>
+                <table>
+                    <tr>
+                        <th>PCR</th>
+                        <th>Measurement</th>
+                        <th>Changes When</th>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-blue">PCR0</span></td>
+                        <td>BIOS/Firmware</td>
+                        <td>AMI firmware update</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-green">PCR4</span></td>
+                        <td>Boot loader + kernel</td>
+                        <td>Kernel update, new AMI</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-purple">PCR7</span></td>
+                        <td>Secure boot policy</td>
+                        <td>Boot config change</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-orange">PCR16</span></td>
+                        <td>Boltz-1 model hash</td>
+                        <td>Model weight update</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <h3>Model Information</h3>
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">🤗</span>
+                    <span class="card-title">Boltz-1 Model</span>
+                </div>
+                <p>
+                    The backend uses <strong>Boltz-1</strong> from 
+                    <a href="https://huggingface.co/boltz-community/boltz-1" style="color: var(--accent-blue);">
+                        boltz-community/boltz-1
+                    </a> on HuggingFace.
+                </p>
+                <table>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td>Model Name</td>
+                        <td>Boltz-1</td>
+                    </tr>
+                    <tr>
+                        <td>HuggingFace Repo</td>
+                        <td><code>boltz-community/boltz-1</code></td>
+                    </tr>
+                    <tr>
+                        <td>Size</td>
+                        <td>~4.6 GB</td>
+                    </tr>
+                    <tr>
+                        <td>Max Sequence</td>
+                        <td>2048 amino acids</td>
+                    </tr>
+                    <tr>
+                        <td>Output Format</td>
+                        <td>PDB structure + confidence JSON</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+        
+        <footer style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-color); text-align: center; color: var(--text-secondary);">
+            <p>🧬 Boltz MPC Biomodel Architecture Documentation</p>
+            <p style="font-size: 0.9rem;">Last updated: May 2026</p>
+        </footer>
+    </div>
+    
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            themeVariables: {
+                darkMode: true,
+                background: '#0d1117',
+                primaryColor: '#58a6ff',
+                primaryTextColor: '#c9d1d9',
+                primaryBorderColor: '#30363d',
+                lineColor: '#8b949e',
+                secondaryColor: '#21262d',
+                tertiaryColor: '#161b22',
+                fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif'
+            }
+        });
+    </script>
+</body>
+</html>

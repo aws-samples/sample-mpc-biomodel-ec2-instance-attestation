@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Boltz Protein Folding - Secure Structure Prediction</title>
+    <meta name="description" content="Secure protein structure prediction with AWS NitroTPM hardware attestation" />
+    <!-- 3Dmol.js for molecular visualization (pinned + Subresource Integrity) -->
+    <script
+      src="https://unpkg.com/3dmol@2.0.0/build/3Dmol-min.js"
+      integrity="sha384-b7KJs2WHaWUkxNcTFp9e9TicO9PfddzQzi6Um3O1sZ54t+zZokHIvNwFsJu90Ytw"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

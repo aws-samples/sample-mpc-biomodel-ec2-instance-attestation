@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Kiwi-NG Configuration for Boltz Protein Folding AMI
+
+    Two build profiles (native kiwi profiles, selected with the kiwi-ng profile flag):
+
+      prod : PRODUCTION / attestable. NO operator access:
+             no SSH, no SSM Agent, no cloud-init, no EC2 Instance Connect,
+             serial console disabled (systemd.getty_auto=false), full kernel hardening.
+
+      foa  : FULL OPERATOR ACCESS (DEV/TEST ONLY): adds openssh-server,
+             amazon-ssm-agent, cloud-init, ec2-instance-connect and debug tools so
+             the instance can be reached via SSM/SSH for debugging. DO NOT USE IN PROD.
+
+    Based on: https://github.com/aws-samples/sample-mpc-app-packaging-using-kiwi-ng
+-->
+<image schemaversion="7.5" name="boltz-protein-folding-attestable">
+    <description type="system">
+        <author>Boltz Team</author>
+        <contact>team@boltz.example.com</contact>
+        <specification>Boltz Protein Folding AMI with hardware attestation support. Profiles: prod (no operator access) and foa (SSH/SSM for dev/test). For AWS EC2 instances with NitroTPM.</specification>
+    </description>
+
+    <!-- Build profiles: exactly one is selected per build via the kiwi-ng profile flag. -->
+    <profiles>
+        <profile name="prod" description="Production - attestable, no operator access (no SSH/SSM)"/>
+        <profile name="foa" description="Full Operator Access - SSH/SSM enabled for debugging (DEV/TEST ONLY)"/>
+    </profiles>
+
+    <preferences>
+        <version>1.0.0</version>
+        <packagemanager>dnf</packagemanager>
+        <locale>en_US</locale>
+        <keytable>us</keytable>
+        <timezone>UTC</timezone>
+        <rpm-excludedocs>true</rpm-excludedocs>
+        <rpm-check-signatures>true</rpm-check-signatures>
+    </preferences>
+
+    <!-- prod: attestable image, serial console/getty DISABLED. -->
+    <preferences profiles="prod">
+        <type
+            image="oem"
+            filesystem="xfs"
+            kernelcmdline="console=ttyS0 rd.shell=0 systemd.getty_auto=false rd.kiwi.verity_options=panic-on-corruption"
+            firmware="uefi"
+            overlayroot="true"
+            overlayroot_write_partition="false"
+            overlayroot_readonly_filesystem="erofs"
+            overlayroot_readonly_partsize="20480"
+            erofscompression="lz4hc,level=12"
+            eficsm="false"
+            verity_blocks="all"
+            bootpartition="false"
+            efipartsize="200"
+            editbootinstall="edit_boot_install.sh"
+        >
+            <oemconfig>
+                <oem-resize>false</oem-resize>
+            </oemconfig>
+            <bootloader name="systemd_boot" timeout="10"/>
+            <initrd action="setup">
+                <dracut uefi="true"/>
+            </initrd>
+            <size unit="G">40</size>
+        </type>
+    </preferences>
+
+    <!-- foa: same attestable image but serial console/getty ENABLED for debugging. -->
+    <preferences profiles="foa">
+        <type
+            image="oem"
+            filesystem="xfs"
+            kernelcmdline="console=ttyS0 rd.shell=0 systemd.getty_auto=true rd.kiwi.verity_options=panic-on-corruption"
+            firmware="uefi"
+            overlayroot="true"
+            overlayroot_write_partition="false"
+            overlayroot_readonly_filesystem="erofs"
+            overlayroot_readonly_partsize="20480"
+            erofscompression="lz4hc,level=12"
+            eficsm="false"
+            verity_blocks="all"
+            bootpartition="false"
+            efipartsize="200"
+            editbootinstall="edit_boot_install.sh"
+        >
+            <oemconfig>
+                <oem-resize>false</oem-resize>
+            </oemconfig>
+            <bootloader name="systemd_boot" timeout="10"/>
+            <initrd action="setup">
+                <dracut uefi="true"/>
+            </initrd>
+            <size unit="G">40</size>
+        </type>
+    </preferences>
+
+    <!-- Amazon Linux 2023 repository -->
+    <repository priority="2" package_gpgcheck="true" sourcetype="mirrorlist" customize="add-gpg-key.sh">
+        <source path="https://cdn.amazonlinux.com/al2023/core/mirrors/latest/$basearch/mirror.list"/>
+    </repository>
+
+    <packages type="image">
+        <!-- Application overlay -->
+        <archive name="overlay.tar.gz"/>
+        
+        <!-- Use minimal Amazon Linux 2023 base -->
+        <namedCollection name="core"/>
+        <namedCollection name="ami-minimal"/>
+        
+        <!-- Core system packages -->
+        <package name="gzip"/>
+        <package name="kernel"/>
+        <package name="kernel-modules-extra"/>
+        <package name="tar"/>
+        <package name="systemd-boot"/>
+        <package name="systemd-resolved"/>
+        
+        <!-- dm-verity and overlay support -->
+        <package name="veritysetup"/>
+        <package name="cryptsetup"/>
+        <package name="dracut-kiwi-verity"/>
+        <package name="dracut-kiwi-overlay"/>
+        
+        <!-- TPM and attestation -->
+        <package name="aws-nitro-tpm-tools"/>
+        <package name="tpm2-tools"/>
+        <!-- openssl CLI: used for the KMS Recipient flow (RSA keypair for the
+             attestation public key + CMS-decrypt of CiphertextForRecipient). -->
+        <package name="openssl"/>
+
+        <!-- Firewall: static, fail-closed nftables ruleset loaded by boltz-firewall.service.
+             firewalld is intentionally NOT installed: a runtime daemon that
+             regenerates its rules from config at each boot is a failure domain for
+             a sealed, attested image (a failed start means no rules). The static
+             nftables ruleset in the sealed rootfs is the enforcement artifact. -->
+        <package name="nftables"/>
+        
+        <!-- Time synchronization -->
+        <package name="amazon-chrony-config"/>
+        
+        <!-- Python for Boltz application (the app uses boto3, not the aws CLI) -->
+        <package name="python3"/>
+        <package name="python3-pip"/>
+        <package name="python3-pyyaml"/>
+        
+        <!-- NVIDIA GPU drivers and CUDA build dependencies -->
+        <package name="kernel-devel"/>
+        <package name="kernel-headers"/>
+        <package name="gcc"/>
+        <package name="make"/>
+        <package name="dkms"/>
+        
+        <!-- Don't install these packages - reduces attack surface and ensures minimal footprint -->
+        <ignore name="ec2-hibinit-agent"/>
+        <ignore name="grubby"/>
+        <ignore name="grub2-pc-modules"/>
+        <ignore name="grub2-tools"/>
+        <ignore name="grub2-efi-aa64-ec2"/>
+        <ignore name="grub2-efi-aa64"/>
+        <ignore name="grub2-efi-aa64-modules"/>
+        <ignore name="grub2-efi-x64-ec2"/>
+        <ignore name="grub2-efi-x64"/>
+        <ignore name="grub2-efi-x64-modules"/>
+        <ignore name="amazon-linux-repo-s3"/>
+        <ignore name="amazon-linux-repo-cdn"/>
+    </packages>
+
+    <!-- prod profile: remove operator access - critical for attestation security. -->
+    <packages type="image" profiles="prod">
+        <ignore name="openssh-server"/>
+        <ignore name="amazon-ssm-agent"/>
+        <ignore name="cloud-init"/>
+        <ignore name="cloud-init-cfg-ec2"/>
+        <ignore name="update-motd"/>
+        <ignore name="ec2-instance-connect"/>
+    </packages>
+
+    <!-- foa profile: operator access + debug tooling (DEV/TEST ONLY). amazon-ssm-agent
+         lets us reach the instance via SSM Session Manager / Run Command for debugging. -->
+    <packages type="image" profiles="foa">
+        <package name="openssh-server"/>
+        <package name="amazon-ssm-agent"/>
+        <package name="cloud-init"/>
+        <package name="cloud-init-cfg-ec2"/>
+        <package name="ec2-instance-connect"/>
+        <package name="vim-minimal"/>
+        <package name="htop"/>
+        <package name="strace"/>
+        <package name="tcpdump"/>
+        <package name="less"/>
+        <package name="jq"/>
+    </packages>
+
+    <packages type="bootstrap">
+        <package name="system-release"/>
+        <package name="dnf"/>
+        <!-- Ignoring these packages forces the use of the minimal versions -->
+        <ignore name="libcurl"/>
+        <ignore name="curl"/>
+        <ignore name="gnupg2"/>
+    </packages>
+</image>

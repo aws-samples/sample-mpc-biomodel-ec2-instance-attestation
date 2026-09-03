@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Guide - Local Development Setup</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        :root {
+            --primary-color: #0972d3;
+            --secondary-color: #414d5c;
+            --background: #fafafa;
+            --card-bg: #ffffff;
+            --text-color: #16191f;
+            --border-color: #e9ebed;
+            --success-color: #037f0c;
+            --warning-color: #8a6500;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Amazon Ember', 'Helvetica Neue', Roboto, Arial, sans-serif;
+            background: var(--background);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .nav {
+            background: var(--secondary-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .nav a:hover, .nav a.active { background: rgba(255,255,255,0.1); }
+        
+        .hero {
+            background: linear-gradient(135deg, #037f0c 0%, #232f3e 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+        
+        .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .hero p { font-size: 1.2rem; opacity: 0.9; max-width: 800px; margin: 0 auto; }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .card h3 { color: var(--secondary-color); margin: 1.5rem 0 0.75rem; }
+        
+        .mermaid {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        
+        code {
+            background: #f1f3f5;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+        }
+        
+        pre {
+            background: #232f3e;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        pre code { background: transparent; padding: 0; }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+        
+        .alert-info { background: #e3f2fd; border-color: #1976d2; color: #0d47a1; }
+        .alert-warning { background: #fff3e0; border-color: #f57c00; color: #e65100; }
+        .alert-success { background: #e8f5e9; border-color: #43a047; color: #1b5e20; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th { background: #f8f9fa; font-weight: 600; }
+        
+        .file-tree {
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            line-height: 1.8;
+        }
+        
+        .file-tree .folder { color: #0972d3; font-weight: bold; }
+        .file-tree .file { color: #414d5c; }
+        
+        .footer {
+            background: var(--secondary-color);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+        
+        .footer a { color: #7dd6ff; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <ul>
+            <li><a href="index.html">Overview</a></li>
+            <li><a href="attestation.html">Attestation</a></li>
+            <li><a href="developer-guide.html" class="active">Developer Guide</a></li>
+            <li><a href="packaging.html">Packaging</a></li>
+        </ul>
+    </nav>
+    
+    <header class="hero">
+        <h1>👩‍💻 Developer Guide</h1>
+        <p>Set up your local development environment and run the Boltz protein folding application</p>
+    </header>
+    
+    <main class="container">
+        <section class="card">
+            <h2>Prerequisites</h2>
+            
+            <h3>Required Hardware</h3>
+            <ul style="margin: 1rem 0 1rem 2rem;">
+                <li><strong>AWS EC2 Instance</strong>: Must be a Nitro-based instance type (C5n, M5n, R5n, or newer)</li>
+                <li><strong>NitroTPM</strong>: Instance must have NitroTPM enabled</li>
+                <li><strong>Optional GPU</strong>: NVIDIA GPU for accelerated inference (CPU mode also supported)</li>
+            </ul>
+            
+            <h3>Required Software</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Software</th>
+                        <th>Version</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Python</td>
+                        <td>3.9+</td>
+                        <td>Runtime for backend and Boltz model</td>
+                    </tr>
+                    <tr>
+                        <td>tpm2-tools</td>
+                        <td>5.0+</td>
+                        <td>TPM command-line tools</td>
+                    </tr>
+                    <tr>
+                        <td>nitro-tpm-attest</td>
+                        <td>Latest</td>
+                        <td>AWS NitroTPM attestation tool</td>
+                    </tr>
+                    <tr>
+                        <td>CUDA (optional)</td>
+                        <td>11.8+</td>
+                        <td>GPU acceleration</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <section class="card">
+            <h2>Project Structure</h2>
+
+            <div class="file-tree">
+<span class="folder">sample-mpc-biomodel-ec2-instance-attestation/</span>
+├── <span class="folder">app/</span>                           <em># Application code</em>
+│   ├── <span class="folder">backend/</span>                   <em># FastAPI backend (runs on the attested AMI)</em>
+│   │   ├── <span class="folder">api/</span>
+│   │   │   ├── <span class="file">models.py</span>          <em># Pydantic models</em>
+│   │   │   └── <span class="file">routes.py</span>          <em># API endpoints</em>
+│   │   ├── <span class="folder">services/</span>
+│   │   │   ├── <span class="file">attestation.py</span>     <em># NitroTPM attestation + PCR16</em>
+│   │   │   ├── <span class="file">attestation_validator.py</span>
+│   │   │   ├── <span class="file">boltz_service.py</span>   <em># Boltz CLI wrapper (GPU/MSA)</em>
+│   │   │   ├── <span class="file">kms_service.py</span>     <em># KMS Recipient-attestation decrypt</em>
+│   │   │   └── <span class="file">job_store.py</span>       <em># Job persistence (disk + cache)</em>
+│   │   ├── <span class="file">config.py</span>              <em># Settings + IMDSv2 region</em>
+│   │   └── <span class="file">main.py</span>                <em># FastAPI app (accelerator/MSA/CORS)</em>
+│   ├── <span class="folder">frontend/</span>                  <em># React/Vite UI (hosted on AWS Amplify)</em>
+│   └── <span class="file">requirements.txt</span>
+├── <span class="folder">cdk/</span>                           <em># CDK infra (all AWS resources)</em>
+├── <span class="folder">packaging-kiwi-ng/</span>             <em># Attested AMI build (prod + foa profiles)</em>
+├── <span class="folder">scripts/</span>                       <em># package-and-upload.sh (trigger pipeline)</em>
+└── <span class="folder">docs/</span>                          <em># Documentation</em>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Environments: prod vs foa</h2>
+            <p>The backend runs from an immutable, NitroTPM-attested AMI built by kiwi-ng.
+            There is no local install path and no locally served UI. The React application is
+            hosted on AWS Amplify and communicates with the backend through API Gateway. Two AMI
+            build profiles exist:</p>
+            <table>
+                <tr><th>Profile</th><th>Use</th><th>Access</th></tr>
+                <tr><td><code>prod</code></td><td>Production</td><td>No SSH, no SSM, and no cloud-init; attestable with a minimal attack surface</td></tr>
+                <tr><td><code>foa</code></td><td>Dev/Test</td><td>Same AMI build plus SSH, SSM Agent, cloud-init, and debug tools; access it with <code>aws ssm start-session</code></td></tr>
+            </table>
+            <p>The profile is a build-time configuration held in the
+            <code>/boltz-attestation/build-profile</code> SSM parameter (seeded to
+            <code>prod</code>), which the CodeBuild AMI builder reads at build start. Switch the
+            next pipeline build with no code change and no redeploy:</p>
+            <pre><code>aws ssm put-parameter --name /boltz-attestation/build-profile --value foa --overwrite
+# ... then trigger a build; set it back to prod afterwards.</code></pre>
+            <p>For a manual/local build, pass <code>build.sh --profile prod|foa</code> instead.</p>
+        </section>
+
+        <section class="card">
+            <h2>Deploy</h2>
+
+            <h3>1. Clone and install CDK deps</h3>
+            <pre><code>git clone https://github.com/aws-samples/sample-mpc-biomodel-ec2-instance-attestation.git
+cd sample-mpc-biomodel-ec2-instance-attestation/cdk
+npm ci</code></pre>
+
+            <h3>2. Deploy the infrastructure</h3>
+            <pre><code># Combined stack (backend + frontend + pipeline + all AWS resources)
+npx cdk deploy BoltzAttestationStack --require-approval never --outputs-file cdk-outputs.json</code></pre>
+
+            <h3>3. Build the attested AMI and roll the ASG</h3>
+            <pre><code>cd ..
+./scripts/package-and-upload.sh          # zip app/ + packaging-kiwi-ng/ -> S3 -> pipeline</code></pre>
+
+            <h3>4. Deploy the frontend to Amplify</h3>
+            <pre><code>./cdk/scripts/deploy-frontend.sh BoltzAttestationStack &lt;aws-profile&gt;</code></pre>
+
+            <h3>5. Access</h3>
+            <table>
+                <tr><td><strong>UI</strong></td><td>The Amplify app URL (stack output <code>AmplifyAppUrl</code>)</td></tr>
+                <tr><td><strong>API</strong></td><td>API Gateway URL (stack output <code>ApiEndpoint</code>); the UI is configured with this endpoint</td></tr>
+                <tr><td><strong>API Docs</strong></td><td><code>&lt;ApiEndpoint&gt;/docs</code></td></tr>
+            </table>
+        </section>
+
+        <section class="card">
+            <h2>Dev workflow (FOA)</h2>
+            <p>For an iterate and debug loop, build the <code>foa</code> AMI and connect to the
+            running instance via SSM Session Manager (no SSH keys required):</p>
+
+            <h3>Connect to the instance</h3>
+            <pre><code>aws ssm start-session --target &lt;instance-id&gt; --region &lt;region&gt;</code></pre>
+
+            <h3>Inspect the backend</h3>
+            <pre><code># Follow / read backend logs
+sudo journalctl -u boltz-backend -f
+sudo journalctl -u boltz-backend -n 100
+
+# Service status + restart
+sudo systemctl status boltz-backend
+sudo systemctl restart boltz-backend</code></pre>
+
+            <h3>Deploy a code change</h3>
+            <p>The AMI is immutable, so backend changes are delivered as a <em>new AMI</em>: edit
+            <code>app/backend/…</code>, run <code>./scripts/package-and-upload.sh</code>,
+            and the pipeline rebuilds the AMI and performs a rolling update of the ASG (SSM AMI swap and instance
+            refresh via Step Functions). Frontend changes:
+            <code>./cdk/scripts/deploy-frontend.sh</code>.</p>
+        </section>
+        
+        <section class="card">
+            <h2>Testing</h2>
+            
+            <h3>Test Health Endpoint</h3>
+            <pre><code>curl http://localhost:8000/health | jq</code></pre>
+            
+            <h3>Test Attestation</h3>
+            <pre><code># Generate attestation document
+curl http://localhost:8000/api/v1/attestation | jq
+
+# Check PCR16 specifically
+curl -s http://localhost:8000/api/v1/attestation | jq '.pcr_values["16"]'</code></pre>
+            
+            <h3>Test Prediction</h3>
+            <pre><code># Submit a prediction job
+curl -X POST http://localhost:8000/api/v1/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sequence": "MVLSPADKTNVKAAWGKVGAHAGEYGAEALERMFLSFPTTKTYFPHFDLSH",
+    "name": "test_protein"
+  }' | jq
+
+# Check job status (replace JOB_ID)
+curl http://localhost:8000/api/v1/results/JOB_ID | jq</code></pre>
+            
+            <h3>Test TPM Directly</h3>
+            <pre><code># Read all PCRs (SHA-256 bank)
+tpm2_pcrread sha256
+
+# Read specific PCR (SHA-384 bank for attestation)
+tpm2_pcrread sha384:16
+
+# Check TPM info
+tpm2_getcap properties-fixed</code></pre>
+        </section>
+        
+        <section class="card">
+            <h2>Environment Variables</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Default</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>PORT</code></td>
+                        <td>8000</td>
+                        <td>Backend API port</td>
+                    </tr>
+                    <tr>
+                        <td><code>MODEL_PATH</code> / <code>BOLTZ_CACHE</code></td>
+                        <td>/opt/boltz/models</td>
+                        <td>Boltz model cache dir (PCR16-measured)</td>
+                    </tr>
+                    <tr>
+                        <td><code>CORS_ORIGINS</code></td>
+                        <td>(empty &rarr; closed)</td>
+                        <td>Comma-separated allowed origins. When unset the backend defaults to a <strong>closed</strong> policy (no cross-origin access) rather than <code>*</code>; set it to the Amplify URL.</td>
+                    </tr>
+                    <tr>
+                        <td><code>BOLTZ_USE_MSA_SERVER</code></td>
+                        <td>false</td>
+                        <td>Use the remote MSA server (needs internet; off on the attested instance)</td>
+                    </tr>
+                    <tr>
+                        <td><code>MODELS_BUCKET</code></td>
+                        <td>(unset)</td>
+                        <td>Optional back-compat override only; intentionally <strong>not</strong> set on the AMI. Each <code>/models/reload</code> request instead carries the full <code>s3://&lt;bucket&gt;/…</code> URI.</td>
+                    </tr>
+                    <tr>
+                        <td><code>ENABLE_ATTESTATION</code></td>
+                        <td>true</td>
+                        <td>Enable TPM attestation</td>
+                    </tr>
+                    <tr>
+                        <td><code>TPM_DEVICE</code></td>
+                        <td>/dev/tpmrm0</td>
+                        <td>Path to TPM device</td>
+                    </tr>
+                    <tr>
+                        <td><code>LOG_LEVEL</code></td>
+                        <td>INFO</td>
+                        <td>Logging verbosity</td>
+                    </tr>
+                    <tr>
+                        <td><code>MAX_SEQUENCE_LENGTH</code></td>
+                        <td>2048</td>
+                        <td>Maximum protein sequence length</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <p>Most of these are set on the backend systemd unit baked into the AMI
+            (<code>packaging-kiwi-ng/overlay/etc/systemd/system/boltz-backend.service</code>).
+            <code>CORS_ORIGINS</code> is the exception: it is fetched from SSM Parameter Store at boot
+            by <code>boltz-config.service</code> and written to <code>/etc/boltz/environment</code>,
+            which the backend unit pulls in via <code>EnvironmentFile=-/etc/boltz/environment</code>
+            (the Amplify origin is only known after the frontend deploys, and a Zero Operator Access
+            instance cannot be edited at runtime). The accelerator (<code>gpu</code>/<code>cpu</code>) is
+            auto-detected from <code>torch.cuda.is_available()</code>; no manual device flag is required.</p>
+        </section>
+        
+        <section class="card">
+            <h2>Troubleshooting</h2>
+            
+            <h3>TPM Access Denied</h3>
+            <div class="alert alert-warning">
+                <strong>Error:</strong> <code>tpm2_pcrread: Error - Failed to initialize tpm context</code>
+            </div>
+            <pre><code># Fix: Add user to tss group and fix permissions
+sudo usermod -aG tss $USER
+sudo chmod 660 /dev/tpmrm0
+# Log out and back in for group changes to take effect</code></pre>
+            
+            <h3>PCR16 Still Zero</h3>
+            <div class="alert alert-warning">
+                <strong>Issue:</strong> PCR16 shows all zeros in attestation
+            </div>
+            <pre><code># Check if model files exist (MODEL_PATH and BOLTZ_CACHE both point here on the AMI)
+ls -la /opt/boltz/models/
+
+# Manually verify extension
+sudo tpm2_pcrextend 16:sha384=$(python3 -c "import hashlib; print(hashlib.sha384(b'test').hexdigest())")
+
+# Restart backend
+sudo systemctl restart boltz-backend</code></pre>
+            
+            <h3>Boltz Model Not Found</h3>
+            <div class="alert alert-warning">
+                <strong>Error:</strong> <code>BoltzNotInstalledError: Boltz CLI is not installed</code>
+            </div>
+            <pre><code># The backend runs under the system interpreter (/usr/bin/python3); there is no venv.
+# Install Boltz into the system site-packages:
+sudo pip3 install boltz
+
+# For GPU support
+sudo pip3 install boltz[cuda]
+
+# Verify installation
+boltz --help</code></pre>
+            
+            <h3>Port Already in Use</h3>
+            <pre><code># Find what's using the port
+sudo lsof -i :8000
+
+# Kill the process
+sudo kill -9 PID
+
+# Or use a different port
+export PORT=8001</code></pre>
+        </section>
+        
+        <section class="card">
+            <h2>Detailed Code Structure</h2>
+            
+            <h3>Backend Entry Point (<code>main.py</code>)</h3>
+            <p>The FastAPI application initializes both the Boltz service and Attestation service at startup:</p>
+            <pre><code>@app.on_event("startup")
+async def startup_event():
+    # Initialize Boltz model service
+    app.state.boltz_service = BoltzService(...)
+    
+    # Initialize Attestation service (extends PCR16)
+    if settings.enable_attestation:
+        app.state.attestation_service = AttestationService()
+        # PCR16 is extended with model hash here!</code></pre>
+            
+            <h3>Attestation Service (<code>attestation.py</code>)</h3>
+            <pre><code>class AttestationService:
+    def __init__(self):
+        # Check TPM availability
+        self._tpm_available = self._check_tpm_availability()
+        
+        # Extend PCR16 with model hash on startup
+        self._extend_model_hash_to_pcr()
+    
+    def _extend_model_hash_to_pcr(self):
+        # Compute SHA-384 hash of model files
+        model_hash = compute_boltz_model_hash()
+        
+        # Extend into PCR16 (SHA-384 bank for Nitro attestation)
+        tpm_extend_pcr(pcr_index=16, data_hash=model_hash)</code></pre>
+            
+            <h3>API Routes (<code>routes.py</code>)</h3>
+            <pre><code>@router.get("/attestation")
+async def get_attestation(req: Request, nonce: Optional[str] = None):
+    # Use singleton service from app.state
+    attestation_service = req.app.state.attestation_service
+    
+    # Generate attestation document
+    attestation = attestation_service.generate_attestation(nonce=nonce)
+    return attestation</code></pre>
+        </section>
+    </main>
+    
+    <footer class="footer">
+        <p>Sample MPC Biomodel EC2 Instance Attestation</p>
+        <p><a href="https://github.com/aws-samples/sample-mpc-biomodel-ec2-instance-attestation">GitHub Repository</a></p>
+    </footer>
+    
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'neutral',
+            flowchart: { useMaxWidth: true, htmlLabels: true }
+        });
+    </script>
+</body>
+</html>

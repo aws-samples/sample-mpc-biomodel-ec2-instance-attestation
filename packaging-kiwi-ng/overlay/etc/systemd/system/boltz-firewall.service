@@ -1,0 +1,24 @@
+[Unit]
+Description=Boltz fail-closed nftables firewall (static, in-TEE)
+Documentation=file:/etc/nftables/boltz-firewall.nft
+# Load the ruleset before any network interface is brought up, so there is never
+# a window where an interface is configured without the firewall in place.
+Wants=network-pre.target
+Before=network-pre.target
+# Apply after sysctl (rp_filter etc.) has been set.
+After=systemd-sysctl.service
+# firewalld is intentionally not used; never let both manage the ruleset.
+Conflicts=firewalld.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Validate then apply. If the sealed ruleset is malformed the unit fails loudly
+# rather than leaving the instance with no firewall.
+ExecStartPre=/usr/sbin/nft -c -f /etc/nftables/boltz-firewall.nft
+ExecStart=/usr/sbin/nft -f /etc/nftables/boltz-firewall.nft
+ExecReload=/usr/sbin/nft -f /etc/nftables/boltz-firewall.nft
+ExecStop=/usr/sbin/nft flush ruleset
+
+[Install]
+WantedBy=multi-user.target

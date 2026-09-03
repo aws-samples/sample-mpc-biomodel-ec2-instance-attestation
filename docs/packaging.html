@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packaging with Kiwi - AMI Builder Guide</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js" integrity="sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        :root {
+            --primary-color: #0972d3;
+            --secondary-color: #414d5c;
+            --background: #fafafa;
+            --card-bg: #ffffff;
+            --text-color: #16191f;
+            --border-color: #e9ebed;
+            --success-color: #037f0c;
+            --warning-color: #8a6500;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Amazon Ember', 'Helvetica Neue', Roboto, Arial, sans-serif;
+            background: var(--background);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .nav {
+            background: var(--secondary-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .nav a:hover, .nav a.active { background: rgba(255,255,255,0.1); }
+        
+        .hero {
+            background: linear-gradient(135deg, #ff9900 0%, #232f3e 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+        
+        .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .hero p { font-size: 1.2rem; opacity: 0.9; max-width: 800px; margin: 0 auto; }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+        
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .card h3 { color: var(--secondary-color); margin: 1.5rem 0 0.75rem; }
+        
+        .mermaid {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        
+        code {
+            background: #f1f3f5;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+        }
+        
+        pre {
+            background: #232f3e;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        
+        pre code { background: transparent; padding: 0; }
+        
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+        
+        .alert-info { background: #e3f2fd; border-color: #1976d2; color: #0d47a1; }
+        .alert-warning { background: #fff3e0; border-color: #f57c00; color: #e65100; }
+        .alert-success { background: #e8f5e9; border-color: #43a047; color: #1b5e20; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th { background: #f8f9fa; font-weight: 600; }
+        
+        .file-tree {
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            line-height: 1.8;
+        }
+        
+        .file-tree .folder { color: #0972d3; font-weight: bold; }
+        .file-tree .file { color: #414d5c; }
+        
+        .footer {
+            background: var(--secondary-color);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+        
+        .footer a { color: #7dd6ff; }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <ul>
+            <li><a href="index.html">Overview</a></li>
+            <li><a href="attestation.html">Attestation</a></li>
+            <li><a href="developer-guide.html">Developer Guide</a></li>
+            <li><a href="packaging.html" class="active">Packaging</a></li>
+        </ul>
+    </nav>
+    
+    <header class="hero">
+        <h1>📦 Packaging with Kiwi</h1>
+        <p>Build attestable Amazon Machine Images (AMIs) using Kiwi-ng from a declarative, version-controlled description</p>
+    </header>
+    
+    <main class="container">
+        <section class="card">
+            <h2>What is Kiwi?</h2>
+            <p><a href="https://osinside.github.io/kiwi/">Kiwi-ng</a> is an OS image builder that creates system images from declarative configuration files. It is well suited to creating AMIs for the following reasons:</p>
+            
+            <ul style="margin: 1rem 0 1rem 2rem;">
+                <li><strong>Repeatability</strong>: the image is defined declaratively and built the same way every time. Bit-for-bit reproducibility is not automatic; pin package versions if you require it.</li>
+                <li><strong>Version Control</strong>: Image configuration is tracked in Git alongside application code</li>
+                <li><strong>Customization</strong>: Full control over packages, services, and configurations</li>
+                <li><strong>Automation</strong>: Integrates into CI/CD pipelines</li>
+            </ul>
+            
+            <div class="mermaid">
+flowchart LR
+    subgraph Input["Configuration Files"]
+        XML[config.xml]
+        SH[config.sh]
+        OVERLAY[overlay/]
+    end
+    
+    subgraph Kiwi["Kiwi-ng Builder"]
+        BUILD[Build Process]
+        ROOT[Root Filesystem]
+        BOOT[Bootloader]
+    end
+    
+    subgraph Output["Output Formats"]
+        RAW[Raw Disk Image]
+        AMI[Amazon AMI]
+        OVA[OVA/VMDK]
+    end
+    
+    XML & SH & OVERLAY --> BUILD
+    BUILD --> ROOT
+    ROOT --> BOOT
+    BOOT --> RAW
+    RAW --> AMI
+    RAW --> OVA
+    
+    style AMI fill:#ff9900,color:#000
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>Kiwi Configuration Structure</h2>
+            
+            <div class="file-tree">
+<span class="folder">packaging-kiwi-ng/</span>
+├── <span class="folder">kiwi/</span>
+│   ├── <span class="file">config.xml</span>              <em># Kiwi image description (prod + foa profiles)</em>
+│   ├── <span class="file">config.sh</span>               <em># Post-install configuration (enables services)</em>
+│   ├── <span class="file">edit_boot_install.sh</span>    <em># Boot / dm-verity setup; records PCR measurements</em>
+│   ├── <span class="file">images.sh</span>               <em># Image finalization script</em>
+│   └── <span class="file">add-gpg-key.sh</span>          <em># Import repository signing key</em>
+├── <span class="folder">overlay/</span>                    <em># Files overlaid onto the root filesystem</em>
+│   ├── <span class="folder">etc/</span>
+│   │   ├── <span class="folder">boltz/</span>
+│   │   │   └── <span class="file">config.yaml</span>
+│   │   ├── <span class="folder">nftables/</span>
+│   │   │   └── <span class="file">boltz-firewall.nft</span>     <em># Static, fail-closed firewall ruleset</em>
+│   │   └── <span class="folder">systemd/system/</span>
+│   │       ├── <span class="file">boltz-backend.service</span>   <em># FastAPI backend service</em>
+│   │       ├── <span class="file">boltz-config.service</span>    <em># Fetch CORS_ORIGINS from SSM at boot</em>
+│   │       └── <span class="file">boltz-firewall.service</span>  <em># Load nftables ruleset before networking</em>
+│   └── <span class="folder">opt/boltz/bin/</span>
+│       └── <span class="file">write-runtime-config.py</span>  <em># Boot config: SSM -&gt; /etc/boltz/environment</em>
+├── <span class="folder">scripts/</span>
+│   ├── <span class="file">install-deps.sh</span>         <em># Install kiwi-ng build dependencies</em>
+│   ├── <span class="file">build.sh</span>                <em># Build the attested AMI</em>
+│   └── <span class="file">upload-ami.sh</span>           <em># Register the raw image as an AMI (coldsnap)</em>
+└── <span class="file">README.md</span>
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>Build Process Overview</h2>
+            
+            <div class="mermaid">
+sequenceDiagram
+    participant Dev as Developer
+    participant Build as Build Server
+    participant Kiwi as Kiwi-ng
+    participant AWS as AWS EC2
+    
+    Dev->>Build: Run build.sh
+    Build->>Kiwi: Parse config.xml
+    Kiwi->>Kiwi: Install base packages
+    Kiwi->>Kiwi: Run config.sh
+    Kiwi->>Kiwi: Apply overlay files
+    Kiwi->>Kiwi: Run images.sh
+    Kiwi->>Build: Output raw disk image
+    
+    Dev->>Build: Run upload-ami.sh
+    Build->>Build: Install coldsnap (rustup + cargo)
+    Build->>AWS: coldsnap upload (EBS direct) to snapshot
+    Build->>AWS: register-image (TPM v2.0, UEFI)
+    AWS-->>Dev: AMI ID
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>Image Configuration (config.xml)</h2>
+            <p>The image is described declaratively in <code>kiwi/config.xml</code>. Rather than
+            reproduce the whole file, the snippets below call out the parts that define what kind of
+            image this is: the base OS, the two operator-access profiles, the sealed boot type, and the
+            packages that matter for attestation. It is a dm-verity sealed, read-only overlay-root
+            appliance booted by systemd-boot (a Unified Kernel Image), not a GRUB image.</p>
+
+            <h3>Base OS and build profiles</h3>
+            <p>The base is a minimal Amazon Linux 2023 (the <code>core</code> and <code>ami-minimal</code>
+            collections), pulled from a GPG-checked mirror list. Exactly one profile is selected per
+            build with the kiwi-ng <code>--profile</code> flag: <code>prod</code> is the Zero Operator
+            Access (attestable) image, and <code>foa</code> is the Full Operator Access image for dev
+            and test only.</p>
+            <pre><code>&lt;image schemaversion="7.5" name="boltz-protein-folding-attestable"&gt;
+    &lt;profiles&gt;
+        &lt;profile name="prod" description="Production, attestable, no operator access (no SSH/SSM)"/&gt;
+        &lt;profile name="foa"  description="Full Operator Access, SSH/SSM enabled (DEV/TEST ONLY)"/&gt;
+    &lt;/profiles&gt;
+
+    &lt;!-- Minimal Amazon Linux 2023 base, from a GPG-checked mirror list --&gt;
+    &lt;repository priority="2" package_gpgcheck="true" sourcetype="mirrorlist" customize="add-gpg-key.sh"&gt;
+        &lt;source path="https://cdn.amazonlinux.com/al2023/core/mirrors/latest/$basearch/mirror.list"/&gt;
+    &lt;/repository&gt;</code></pre>
+
+            <h3>Zero Operator Access (prod) vs Full Operator Access (foa)</h3>
+            <p>This is the security-critical difference between the two profiles. The <code>prod</code>
+            (Zero Operator Access) profile removes every remote-access path, so a running instance
+            cannot be logged into or modified. The <code>foa</code> profile adds SSH, the SSM Agent, and
+            debug tooling, which is why it is restricted to dev and test. The <code>prod</code> kernel
+            command line also disables the serial console getty (<code>systemd.getty_auto=false</code>);
+            <code>foa</code> is identical except it sets <code>systemd.getty_auto=true</code>.</p>
+            <pre><code>&lt;!-- prod (Zero Operator Access): strip every remote-access path --&gt;
+&lt;packages type="image" profiles="prod"&gt;
+    &lt;ignore name="openssh-server"/&gt;
+    &lt;ignore name="amazon-ssm-agent"/&gt;
+    &lt;ignore name="cloud-init"/&gt;
+    &lt;ignore name="ec2-instance-connect"/&gt;
+    &lt;ignore name="update-motd"/&gt;
+&lt;/packages&gt;
+
+&lt;!-- foa (Full Operator Access, DEV/TEST ONLY): add SSH, SSM and debug tools --&gt;
+&lt;packages type="image" profiles="foa"&gt;
+    &lt;package name="openssh-server"/&gt;
+    &lt;package name="amazon-ssm-agent"/&gt;
+    &lt;package name="cloud-init"/&gt;
+    &lt;package name="ec2-instance-connect"/&gt;
+    &lt;package name="vim-minimal"/&gt;
+    &lt;package name="htop"/&gt;
+    &lt;package name="strace"/&gt;
+    &lt;package name="tcpdump"/&gt;
+&lt;/packages&gt;</code></pre>
+
+            <h3>Sealed boot type (dm-verity + systemd-boot)</h3>
+            <p>Both profiles use the same appliance boot type: a read-only erofs overlay root with
+            <code>verity_blocks="all"</code> (so the whole root is dm-verity sealed and boot panics on
+            corruption), booted by a systemd-boot Unified Kernel Image under UEFI.
+            <code>editbootinstall</code> runs <code>edit_boot_install.sh</code>, which computes the boot
+            PCRs over that UKI.</p>
+            <pre><code>&lt;preferences profiles="prod"&gt;
+    &lt;type image="oem" filesystem="xfs" firmware="uefi"
+          overlayroot="true"
+          overlayroot_readonly_filesystem="erofs"
+          verity_blocks="all"
+          kernelcmdline="console=ttyS0 rd.shell=0 systemd.getty_auto=false rd.kiwi.verity_options=panic-on-corruption"
+          editbootinstall="edit_boot_install.sh"&gt;
+        &lt;oemconfig&gt;&lt;oem-resize&gt;false&lt;/oem-resize&gt;&lt;/oemconfig&gt;
+        &lt;bootloader name="systemd_boot" timeout="10"/&gt;
+        &lt;initrd action="setup"&gt;&lt;dracut uefi="true"/&gt;&lt;/initrd&gt;
+        &lt;size unit="G"&gt;40&lt;/size&gt;
+    &lt;/type&gt;
+&lt;/preferences&gt;</code></pre>
+
+            <h3>Key packages</h3>
+            <p>The base package set (shared by both profiles) pulls in the boot chain, the dm-verity and
+            overlay support, the attestation tooling, the Python runtime, and the NVIDIA/CUDA build
+            dependencies. GRUB is explicitly excluded, since systemd-boot is the bootloader.</p>
+            <pre><code>&lt;packages type="image"&gt;
+    &lt;archive name="overlay.tar.gz"/&gt;              &lt;!-- app bin, systemd units, config --&gt;
+
+    &lt;!-- Boot chain: systemd-boot UKI (no GRUB) --&gt;
+    &lt;package name="kernel"/&gt;
+    &lt;package name="systemd-boot"/&gt;
+
+    &lt;!-- dm-verity sealed / erofs overlay root --&gt;
+    &lt;package name="veritysetup"/&gt;
+    &lt;package name="dracut-kiwi-verity"/&gt;
+    &lt;package name="dracut-kiwi-overlay"/&gt;
+
+    &lt;!-- NitroTPM attestation + the KMS Recipient flow --&gt;
+    &lt;package name="aws-nitro-tpm-tools"/&gt;
+    &lt;package name="tpm2-tools"/&gt;
+    &lt;package name="openssl"/&gt;
+
+    &lt;!-- Boltz application runtime --&gt;
+    &lt;package name="awscli"/&gt;
+    &lt;package name="python3"/&gt;
+    &lt;package name="python3-pip"/&gt;
+
+    &lt;!-- NVIDIA driver + CUDA build deps (driver and CUDA are installed in config.sh) --&gt;
+    &lt;package name="kernel-devel"/&gt;
+    &lt;package name="gcc"/&gt;
+    &lt;package name="make"/&gt;
+    &lt;package name="dkms"/&gt;
+
+    &lt;!-- GRUB explicitly excluded; systemd-boot is the bootloader --&gt;
+    &lt;ignore name="grub2-tools"/&gt;
+    &lt;ignore name="grub2-efi-x64"/&gt;
+&lt;/packages&gt;</code></pre>
+
+            <p>The <code>prod</code> image is finished off by two post-install scripts:
+            <code>config.sh</code> creates the unprivileged <code>boltz</code> service user (there is no
+            <code>ec2-user</code> outside <code>foa</code>), installs the NVIDIA driver and the Python
+            dependencies into the system interpreter, and enables the backend services; and
+            <code>images.sh</code> clears caches, temp files, and logs just before the image is
+            created.</p>
+        </section>
+
+        <section class="card">
+            <h2>Building the Image</h2>
+            
+            <h3>Step 1: Install Kiwi Dependencies</h3>
+            <pre><code>cd packaging-kiwi-ng/scripts
+sudo ./install-deps.sh</code></pre>
+            
+            <p><code>install-deps.sh</code> installs:</p>
+            <ul style="margin: 0.5rem 0 1rem 2rem;">
+                <li>Kiwi-ng (<code>kiwi-cli</code>, <code>python3-kiwi</code>, <code>kiwi-systemdeps-core</code>) and <code>qemu-img</code></li>
+                <li><code>veritysetup</code> and <code>erofs-utils</code> for the dm-verity sealed, erofs overlay root</li>
+                <li><code>cargo</code> and <code>aws-nitro-tpm-tools</code></li>
+            </ul>
+            <div class="alert alert-info">
+                <strong>Note:</strong> <code>install-deps.sh</code> does not install the AWS CLI. The
+                snapshot upload uses <strong>coldsnap</strong>, and coldsnap now needs a newer Rust
+                toolchain than the distro <code>cargo</code> can provide. In the CodeBuild pipeline the
+                buildspec installs a current <code>rustup</code> stable toolchain plus the C build deps
+                (<code>gcc</code>, <code>gcc-c++</code>, <code>make</code>, <code>cmake</code>,
+                <code>perl</code>, <code>nasm</code>) and then runs <code>cargo install --locked
+                coldsnap</code> before registering the AMI.
+            </div>
+            
+            <h3>Step 2: Build the Image</h3>
+            <pre><code>sudo ./build.sh</code></pre>
+            
+            <p>The build process:</p>
+            <ol style="margin: 0.5rem 0 1rem 2rem;">
+                <li>Creates a temporary root filesystem</li>
+                <li>Installs packages from repositories</li>
+                <li>Copies application code and overlay files</li>
+                <li>Runs config.sh for system configuration</li>
+                <li>Runs images.sh for final cleanup</li>
+                <li>Creates a bootable disk image</li>
+            </ol>
+            
+            <div class="alert alert-info">
+                <strong>Build Time:</strong> A full build typically takes 15-30 minutes depending on your system and network speed.
+            </div>
+            
+            <h3>Step 3: Upload to AWS</h3>
+            <pre><code>./upload-ami.sh</code></pre>
+            
+            <p>This script does not use S3 or an EC2 image-import task. It:</p>
+            <ol style="margin: 0.5rem 0 1rem 2rem;">
+                <li>Builds and installs coldsnap if it is not already present</li>
+                <li>Uploads the raw image directly to an EBS snapshot with coldsnap (EBS Direct APIs)</li>
+                <li>Registers an AMI from that snapshot with <code>aws ec2 register-image</code>, setting <code>--tpm-support v2.0</code> and <code>--boot-mode uefi</code></li>
+                <li>Tags the AMI and snapshot, then outputs the AMI ID and the recorded PCR measurements</li>
+            </ol>
+        </section>
+        
+        <section class="card">
+            <h2>Build Pipeline</h2>
+            
+            <div class="mermaid">
+flowchart TB
+    subgraph Local["Local Development"]
+        CODE[Application Code]
+        CONFIG[Kiwi Config]
+    end
+
+    subgraph CI["AWS CodePipeline / CodeBuild (LINUX_EC2 fleet, AL2023)"]
+        SRC[Source in artifact bucket]
+        INSTALL[dnf deps + rustup + coldsnap]
+        BUILD[kiwi-ng build raw image]
+        SNAP[coldsnap upload EBS snapshot]
+        REG[register-image TPM v2.0 UEFI]
+    end
+
+    subgraph AWS["AWS"]
+        AMI[AMI]
+        SSM[SSM: AMI id + PCR trust store]
+        LAUNCH[Launch Instance]
+    end
+
+    CODE & CONFIG --> SRC
+    SRC --> INSTALL
+    INSTALL --> BUILD
+    BUILD --> SNAP
+    SNAP --> REG
+    REG --> AMI
+    AMI --> SSM
+    AMI --> LAUNCH
+
+    style AMI fill:#ff9900,color:#000
+            </div>
+            
+            <h3>How the build actually runs (AWS CodePipeline / CodeBuild)</h3>
+            <p>There is no GitHub Actions workflow in this repository. The AMI is built by an AWS
+            CodePipeline / CodeBuild project defined in CDK
+            (<code>cdk/lib/constructs/codebuild.ts</code>). kiwi-ng cannot build a disk image inside a
+            container, so the build runs on a reserved-capacity <strong>EC2 fleet</strong>
+            (<code>LINUX_EC2</code>, Amazon Linux 2023) where loop devices and dm-verity work natively.
+            The project uses an <strong>IAM role</strong> (EBS Direct API, <code>ec2:RegisterImage</code>,
+            and SSM write for the AMI id and PCR trust store), never static access keys. The buildspec:</p>
+            <pre><code># install phase (buildspec, on the AL2023 EC2 fleet)
+dnf install -y kiwi-cli python3-kiwi kiwi-systemdeps-core \
+    python3-poetry-core qemu-img veritysetup erofs-utils git jq aws-nitro-tpm-tools
+dnf install -y gcc gcc-c++ make cmake perl nasm
+# Distro cargo (rustc 1.92) is too old for coldsnap's deps, so use rustup stable:
+curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
+    --default-toolchain stable --profile minimal
+source "$HOME/.cargo/env"
+cargo install --locked coldsnap
+
+# build + upload phases
+./packaging-kiwi-ng/scripts/build.sh      --profile "$BUILD_PROFILE"   # prod or foa
+./packaging-kiwi-ng/scripts/upload-ami.sh                              # coldsnap + register-image</code></pre>
+            <div class="alert alert-info">
+                <strong>BUILD_PROFILE:</strong> the CodeBuild environment variable
+                <code>BUILD_PROFILE</code> selects the kiwi profile. It defaults to <code>prod</code>,
+                the attested Zero Operator Access image (no SSH, no SSM agent, no cloud-init,
+                dm-verity read-only root). Set it to <code>foa</code> for a debuggable image with SSH
+                and the SSM Agent (dev/test only).
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>Overlay Files</h2>
+            <p>Files in the <code>overlay/</code> directory are copied directly to the root filesystem. This is useful for:</p>
+            
+            <ul style="margin: 1rem 0 1rem 2rem;">
+                <li>Systemd service files</li>
+                <li>Application configuration</li>
+                <li>Udev rules</li>
+                <li>Custom scripts</li>
+            </ul>
+            
+            <h3>Example: Systemd Service</h3>
+            <pre><code># overlay/etc/systemd/system/boltz-backend.service
+[Unit]
+Description=Boltz Protein Folding Backend API
+After=network.target
+# boltz-config.service fetches CORS_ORIGINS from SSM and writes /etc/boltz/environment
+# before we start. Wants (not Requires) so a config-fetch failure does not block boot.
+After=boltz-config.service
+Wants=boltz-config.service
+
+[Service]
+Type=simple
+User=boltz
+Group=boltz
+WorkingDirectory=/opt/boltz/app
+Environment=PYTHONPATH=/opt/boltz/app
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=MODEL_PATH=/opt/boltz/models
+# BOLTZ_CACHE must equal MODEL_PATH so the CLI loads weights from exactly the
+# directory attestation measures into PCR16.
+Environment=BOLTZ_CACHE=/opt/boltz/models
+EnvironmentFile=-/etc/boltz/environment
+# System python (there is no venv); the boltz user reaches the TPM via the tss group.
+ExecStart=/usr/bin/python3 -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --workers 1
+SupplementaryGroups=tss
+Restart=always
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+            
+            <h3>Example: Application Config</h3>
+            <pre><code># overlay/etc/boltz/config.yaml
+server:
+  host: 0.0.0.0
+  port: 8000
+  workers: 1
+
+model:
+  path: /opt/boltz/models   # same dir attestation measures into PCR16
+  device: auto              # auto, cpu, or cuda
+  max_sequence_length: 2048
+
+attestation:
+  enabled: true
+  tpm_device: /dev/tpmrm0
+  pcr_banks:
+    - sha256
+  validity_seconds: 300
+
+logging:
+  level: INFO
+  format: json</code></pre>
+
+            <h3>In-image firewall (fail-closed nftables)</h3>
+            <p>The firewall is a <strong>static nftables ruleset</strong>
+            (<code>overlay/etc/nftables/boltz-firewall.nft</code>), not firewalld. It is loaded once at
+            boot by <code>boltz-firewall.service</code>, ordered <code>Before=network-pre.target</code>,
+            so the rules are in place before any interface is configured. The base chain policy is
+            <code>drop</code> and there is no zone model, so coverage is interface-agnostic: any ENI, the
+            primary one or a hot-plugged secondary, is denied by default and only the Boltz backend port
+            (8000), loopback, DHCP, IPv6 neighbor discovery, and return traffic are allowed (SSH is
+            added only under the <code>foa</code> profile). Port 8000 is the only listening service: the
+            frontend is hosted on Amplify and reaches the instance through API Gateway, a VPC Link, and
+            the internal NLB, so nothing else is served from the instance. This is deliberate: firewalld is a runtime
+            daemon that regenerates its rules from config at every boot, so a failed daemon start would
+            mean no rules and an open instance. A static ruleset in the dm-verity sealed rootfs is the
+            enforcement artifact itself, so it is part of the attested image and cannot be altered at
+            runtime. <code>config.sh</code> validates the final ruleset with <code>nft -c</code> at build
+            time, so a malformed firewall fails the AMI build rather than the boot. The firewall is the
+            in-TEE control; the AWS Security Group is a separate hypervisor-level backstop that sits
+            outside the attestation boundary.</p>
+            <pre><code># overlay/etc/nftables/boltz-firewall.nft (excerpt)
+table inet boltz_filter {
+    chain input {
+        type filter hook input priority 0; policy drop;
+        ct state established,related accept
+        ct state invalid drop
+        iif "lo" accept
+        tcp dport 8000 accept
+        # ssh (tcp/22) is uncommented by config.sh only for the foa profile
+    }
+    chain forward { type filter hook forward priority 0; policy drop; }
+    chain output  { type filter hook output  priority 0; policy accept; }
+}</code></pre>
+        </section>
+
+        <section class="card">
+            <h2>PCR Values in AMI</h2>
+            <p>The platform and boot PCRs (PCR4, 7, 12) are deterministic for a given image: they are
+            fixed at build time and computed over the systemd-boot Unified Kernel Image (UKI) by
+            <code>edit_boot_install.sh</code> using <code>nitro-tpm-pcr-compute</code>, and written to
+            <code>pcr_measurements.json</code>. PCR16 is different: it is a <strong>runtime</strong>
+            measurement (see the note below the table), not part of the AMI.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>PCR</th>
+                        <th>Determined By</th>
+                        <th>Changes When</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>PCR4</code></td>
+                        <td>UEFI boot application: the systemd-boot UKI (not GRUB, which is excluded)</td>
+                        <td>Kernel, initrd, or UKI contents change</td>
+                    </tr>
+                    <tr>
+                        <td><code>PCR7</code></td>
+                        <td>Secure Boot state, computed over the same UKI</td>
+                        <td>Secure Boot config or the signed UKI changes</td>
+                    </tr>
+                    <tr>
+                        <td><code>PCR12</code></td>
+                        <td>Kernel command line</td>
+                        <td>kernelcmdline in config.xml changes</td>
+                    </tr>
+                    <tr>
+                        <td><code>PCR16</code></td>
+                        <td>Runtime: SHA-384 of the Boltz weights, extended at model load</td>
+                        <td>The loaded model changes; all-zeros when no model is present</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="alert alert-warning">
+                <strong>Important:</strong> PCR16 is extended at model load with the SHA-384 of the
+                Boltz weights. With no model present at boot it is deliberately left unextended (its
+                reset value, all-zeros), so it is not deterministic from the image configuration. After
+                building a new AMI, record the new boot PCRs and update any KMS key policies that
+                reference them.
+            </div>
+
+            <h3>Recording PCR Values</h3>
+            <p>The <code>prod</code> image has no SSH, no <code>ec2-user</code>, and no SSM agent, so you
+            do not log in to read PCRs. The boot PCRs (4, 7, 12) are produced at build time in
+            <code>pcr_measurements.json</code> (also written to the SSM trust-store parameter by the
+            pipeline), and the running instance reports all PCRs through the attestation API. Only a
+            <code>foa</code> (dev/test) image can be reached over SSH.</p>
+            <pre><code># Boot PCRs (4, 7, 12): from the build artifact, no login required
+cat packaging-kiwi-ng/output/pcr_measurements.json
+
+# All PCRs, including the runtime PCR16, from the attestation document
+curl -s https://&lt;backend&gt;/api/v1/attestation | jq '.pcr_values'
+
+# foa (dev/test) images only: read PCRs directly on the instance
+# ssh ec2-user@instance-ip
+# tpm2_pcrread sha384:4,7,12,16</code></pre>
+        </section>
+        
+        <section class="card">
+            <h2>Best Practices</h2>
+            
+            <ul style="margin: 1rem 0 1rem 2rem;">
+                <li><strong>Version Everything</strong>: Tag your Kiwi configs alongside application versions</li>
+                <li><strong>Minimize Image Size</strong>: Remove unnecessary packages and clean caches</li>
+                <li><strong>Security Hardening</strong>: Remove default credentials, disable root login</li>
+                <li><strong>Test Images</strong>: Always test new AMIs before production deployment</li>
+                <li><strong>Document PCR Values</strong>: Keep a record of expected PCR values per AMI version</li>
+                <li><strong>Automate Builds</strong>: Use CI/CD to ensure consistent builds</li>
+            </ul>
+        </section>
+    </main>
+    
+    <footer class="footer">
+        <p>Sample MPC Biomodel EC2 Instance Attestation</p>
+        <p><a href="https://github.com/aws-samples/sample-mpc-biomodel-ec2-instance-attestation">GitHub Repository</a></p>
+    </footer>
+    
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'neutral',
+            flowchart: { useMaxWidth: true, htmlLabels: true }
+        });
+    </script>
+</body>
+</html>
