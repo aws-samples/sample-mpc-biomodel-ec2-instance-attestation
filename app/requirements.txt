@@ -44,7 +44,7 @@ boltz>=0.4.0
 # deferred until that toolchain is revalidated end to end rather than risk breaking
 # attested inference. Both are suppressed in .grype.yaml with the full rationale; revisit
 # that file when the pinned GPU stack supports a patched torch.
-torch==2.6.0
+torch==2.13.0
 torchvision==0.21.0
 torchaudio==2.6.0
 numpy>=1.24.0
